@@ -1,0 +1,22 @@
+Concerning the data:
+
+The CALF_NORMAL file contains the data for the endpoints of the ENFs for 8 different healthy patients.
+The CALF_MODERATE file contains the data for the endpoints of the ENFs for 7 different patients from the moderate neuropathy group.
+
+The data are structured into a list with "ppp" objects as elements. 
+You can read more about ppp object here: https://www.rdocumentation.org/packages/spatstat/versions/1.64-1/topics/ppp.object
+Every element of the list correspond to data from a different patient.
+
+You can import the data into R with:
+data = readRDS('path_to_the_data')
+
+You can visualize the data with the plot function:
+For example to visualize the point pattern of the first subject use plot(data[[1]))
+
+
+The use of the spatstat library in R is highly reccomended.
+
+
+
+
+
