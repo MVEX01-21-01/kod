@@ -3,7 +3,6 @@ library(ggplot2)
 theme_set(theme_minimal())
 library(spatstat)
 source('repcluster.est.r')
-source('repcluster.params.r')
 
 
 # Load data ====================================================================
@@ -76,3 +75,32 @@ plotfit(fit.matclust)
 
 
 # Envelope test ----
+# https://stackoverflow.com/a/38176292/15077901
+# https://research.csiro.au/software/wp-content/uploads/sites/6/2015/02/Rspatialcourse_CMIS_PDF-Standard.pdf
+envelopes <- function(X, groups, fits, statistic, alpha=0.05, global=F, ...) {
+  as.anylist(mapply(function(X, fit) {
+    # significance required for each
+    gamma <- 1 - (1-alpha)^(1/length(X))
+    nsim  <- ceiling(1/gamma - 1)
+    
+    # simulate from fit
+    rFit <- match.fun(paste('r', fit$internal$model, sep=''))
+    
+    # construct envelopes
+    anylapply(X, function(ppp) {
+      sims <- do.call(rFit,
+          as.list(c(fit$clustpar, fit$modelpar['mu'], nsim=(1+global)*nsim, win=list(ppp))))
+      envelope(ppp, statistic, nsim=nsim, simulate=sims, global=global, ...)
+    })
+  }, X=split(X, groups), fit=fits))
+}
+
+envs.thomas   <- envelopes(data$ppp, data$g, fit.thomas, Gest, global=T, savefuns=T)
+envs.matclust <- envelopes(data$ppp, data$g, fit.matclust, Gest, global=T, savefuns=T)
+plot(envs.thomas)
+plot(envs.matclust)
+
+tests.thomas <- lapply(envs.thomas, function(X) lapply(X, mad.test))
+sapply(tests.thomas, function(X) length(X)*min(sapply(X, function(t) t$p.value)))
+tests.matclust <- lapply(envs.matclust, function(X) lapply(X, mad.test))
+sapply(tests.matclust, function(X) length(X)*min(sapply(X, function(t) t$p.value)))
