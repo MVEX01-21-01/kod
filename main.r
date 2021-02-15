@@ -2,7 +2,6 @@
 library(ggplot2)
 theme_set(theme_minimal())
 library(spatstat)
-source('repcluster.est.r')
 
 
 # Load data ====================================================================
@@ -21,6 +20,7 @@ params.each <- function(X, cluster) {
 fit.each.thomas   <- params.each(data$ppp, 'Thomas')
 fit.each.matclust <- params.each(data$ppp, 'MatClust')
 longparams <- function(pars, model, group) {
+  # reshape the data into easily visualized format
   df <- data.frame(t(pars), model, group)
   varying <- colnames(df)[1:(ncol(df)-2)]
   df <- reshape(df, direction='long', varying=varying, v.names='value',
@@ -36,6 +36,43 @@ ggplot(data.params, aes(group, value)) +
 
 
 # Estimating bar(K) ============================================================
+# Estimating bar(lambda) from aggregation recipe in Illian (eq 4.7.1)
+intensitybar <- function(X, groups) {
+  anylapply(split(X,groups), function(lppp) {
+    intensities <- sapply(lppp, intensity)
+    areas <- sapply(lppp, area)
+    areas.sum <- sum(areas)
+    sum(intensities * areas / areas.sum) 
+  })
+}
+
+# Estimating bar(K) from data hyperframe based on groups
+Kbar <- function(ppp, groups, ...) {
+  K <- anylapply(ppp, function(ppp) Kest(ppp, ..., ratio=T))
+  anylapply(split(K, groups), pool)
+}
+
+# Fit cluster model to data hyperframe based on bar(K) estimate
+repcluster.estK <- function(X, groups, cluster, startpars=NULL, lambda=NULL, ...) {
+  info <- spatstatClusterModelInfo(cluster)
+  estK <- match.fun(paste(tolower(cluster), '.estK', sep=''))
+  if (!is.null(startpars))
+    startpars <- anylapply(startpar, info$checkpar)
+  else {
+    # just take an average of suggested starting params
+    # (as long as we're not too far off, it's ok. This agrees with what
+    #  kppm computes for single pattern estimates)
+    startpars <- anylapply(split(X, groups),
+                           function(lppp) rowMeans(sapply(lppp, info$selfstart)))
+  }
+  if (is.null(lambda))
+    lambda <- intensitybar(X, groups)
+  
+  K <- Kbar(X, groups, correction='best')
+  as.anylist(apply(cbind(Kbar=K, par=startpars, lambda=lambda), 1,
+                   function(row) estK(row$Kbar, startpar=row$par, lambda=row$lambda, ...)))
+}
+
 K <- Kbar(data$ppp, data$g, correction='iso')
 
 # Plot
@@ -69,13 +106,13 @@ ylim.minconfit.L <- function(fits, cols) {
 # convenience for plotting both
 plotfit <- function(f) plot(f, sqrt(cbind(pooltheo,pooliso,fit)/pi)-r~r,
                             ylim=ylim.minconfit.L(f, c('pooliso','pooltheo','fit')))
-
 plotfit(fit.thomas)
 plotfit(fit.matclust)
 
 
 # Envelope test ----
-# https://stackoverflow.com/a/38176292/15077901
+# Suggestions on how to perform multiple testing:
+# Baddeley: https://stackoverflow.com/a/38176292/15077901
 # https://research.csiro.au/software/wp-content/uploads/sites/6/2015/02/Rspatialcourse_CMIS_PDF-Standard.pdf
 envelopes <- function(X, groups, fits, statistic, alpha=0.05, global=F, ...) {
   as.anylist(mapply(function(X, fit) {
@@ -89,17 +126,21 @@ envelopes <- function(X, groups, fits, statistic, alpha=0.05, global=F, ...) {
     # construct envelopes
     anylapply(X, function(ppp) {
       sims <- do.call(rFit,
+          # Note that a "global" envelope requires double the simulations
           as.list(c(fit$clustpar, fit$modelpar['mu'], nsim=(1+global)*nsim, win=list(ppp))))
       envelope(ppp, statistic, nsim=nsim, simulate=sims, global=global, ...)
     })
   }, X=split(X, groups), fit=fits))
 }
 
+# Compute the envelopes
 envs.thomas   <- envelopes(data$ppp, data$g, fit.thomas, Gest, global=T, savefuns=T)
 envs.matclust <- envelopes(data$ppp, data$g, fit.matclust, Gest, global=T, savefuns=T)
 plot(envs.thomas)
 plot(envs.matclust)
 
+# Looking at the minimum p * no of tests. This was a suggestion to try to
+# evaluate the significance levels, but it's not even clear this value is meaningful
 tests.thomas <- lapply(envs.thomas, function(X) lapply(X, mad.test))
 sapply(tests.thomas, function(X) length(X)*min(sapply(X, function(t) t$p.value)))
 tests.matclust <- lapply(envs.matclust, function(X) lapply(X, mad.test))
