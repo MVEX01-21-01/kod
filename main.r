@@ -3,6 +3,14 @@ library(ggplot2)
 theme_set(theme_minimal())
 library(spatstat)
 
+# Helper function splitting over groups.
+# This enables us to write functions in terms of a single set of patterns,
+# and then using this function compose to groups
+#grouped <- function(f, data, ...) anylapply(split(data$ppp, data$g), f, ...)
+grouped <- function(f, data, ..., SIMPLIFY=F) {
+  as.anylist(mapply(f, split(data$ppp, data$g), ..., SIMPLIFY=SIMPLIFY))
+}
+
 
 # Load data ====================================================================
 data_moderate <- readRDS('ENDPOINT_DATA/CALF_MODERATE')
@@ -37,23 +45,18 @@ ggplot(data.params, aes(group, value)) +
 
 # Estimating bar(K) ============================================================
 # Estimating bar(lambda) from aggregation recipe in Illian (eq 4.7.1)
-intensitybar <- function(X, groups) {
-  anylapply(split(X,groups), function(lppp) {
-    intensities <- sapply(lppp, intensity)
-    areas <- sapply(lppp, area)
-    areas.sum <- sum(areas)
-    sum(intensities * areas / areas.sum) 
-  })
+intensitybar <- function(X) {
+  intensities <- sapply(X, intensity)
+  areas <- sapply(X, area)
+  areas.sum <- sum(areas)
+  sum(intensities * areas / areas.sum) 
 }
 
-# Estimating bar(K) from data hyperframe based on groups
-Kbar <- function(ppp, groups, ...) {
-  K <- anylapply(ppp, function(ppp) Kest(ppp, ..., ratio=T))
-  anylapply(split(K, groups), pool)
-}
+# Estimating bar(K) from list of patterns
+Kbar <- function(X, ...) pool(anylapply(X, Kest, ..., ratio=T))
 
 # Fit cluster model to data hyperframe based on bar(K) estimate
-repcluster.estK <- function(X, groups, cluster, startpars=NULL, lambda=NULL, ...) {
+repcluster.estK <- function(hX, cluster, startpars=NULL, lambda=NULL, ...) {
   info <- spatstatClusterModelInfo(cluster)
   estK <- match.fun(paste(tolower(cluster), '.estK', sep=''))
   if (!is.null(startpars))
@@ -62,29 +65,26 @@ repcluster.estK <- function(X, groups, cluster, startpars=NULL, lambda=NULL, ...
     # just take an average of suggested starting params
     # (as long as we're not too far off, it's ok. This agrees with what
     #  kppm computes for single pattern estimates)
-    startpars <- anylapply(split(X, groups),
-                           function(lppp) rowMeans(sapply(lppp, info$selfstart)))
+    startpars <- grouped(function(lppp) rowMeans(sapply(lppp, info$selfstart)), hX)
   }
   if (is.null(lambda))
-    lambda <- intensitybar(X, groups)
+    lambda <- grouped(intensitybar, hX)
   
-  K <- Kbar(X, groups, correction='best')
+  K <- grouped(Kbar, hX, correction='best')
   as.anylist(apply(cbind(Kbar=K, par=startpars, lambda=lambda), 1,
                    function(row) estK(row$Kbar, startpar=row$par, lambda=row$lambda, ...)))
 }
 
-K <- Kbar(data$ppp, data$g, correction='iso')
+K <- grouped(Kbar, data, correction='iso')
 
 # Plot
 plot(K, sqrt(cbind(pooltheo,pooliso,hiiso,loiso)/pi)-r~r,
      shade=c('hiiso', 'loiso'), equal.scales=T)
-# Test if they are different (not interesting)
-#print(studpermu.test(data, ppp ~ g))
 
 
 # Fitting to aggregate estimate ================================================
-fit.thomas   <- repcluster.estK(data$ppp, data$g, 'Thomas')
-fit.matclust <- repcluster.estK(data$ppp, data$g, 'MatClust')
+fit.thomas   <- repcluster.estK(data, 'Thomas')
+fit.matclust <- repcluster.estK(data, 'MatClust')
 
 # Plotting the fits ----
 # spatstat seems to have difficulties with determining limits
@@ -111,37 +111,12 @@ plotfit(fit.matclust)
 
 
 # Envelope test ----
-# Suggestions on how to perform multiple testing:
-# Baddeley: https://stackoverflow.com/a/38176292/15077901
-# https://research.csiro.au/software/wp-content/uploads/sites/6/2015/02/Rspatialcourse_CMIS_PDF-Standard.pdf
-envelopes <- function(X, groups, fits, statistic, alpha=0.05, global=F, ...) {
-  as.anylist(mapply(function(X, fit) {
-    # significance required for each
-    gamma <- 1 - (1-alpha)^(1/length(X))
-    nsim  <- ceiling(1/gamma - 1)
-    
-    # simulate from fit
-    rFit <- match.fun(paste('r', fit$internal$model, sep=''))
-    
-    # construct envelopes
-    anylapply(X, function(ppp) {
-      sims <- do.call(rFit,
-          # Note that a "global" envelope requires double the simulations
-          as.list(c(fit$clustpar, fit$modelpar['mu'], nsim=(1+global)*nsim, win=list(ppp))))
-      envelope(ppp, statistic, nsim=nsim, simulate=sims, global=global, ...)
-    })
-  }, X=split(X, groups), fit=fits))
-}
+source('multiGET.r')
 
 # Compute the envelopes
-envs.thomas   <- envelopes(data$ppp, data$g, fit.thomas, Gest, global=T, savefuns=T)
-envs.matclust <- envelopes(data$ppp, data$g, fit.matclust, Gest, global=T, savefuns=T)
-plot(envs.thomas)
-plot(envs.matclust)
-
-# Looking at the minimum p * no of tests. This was a suggestion to try to
-# evaluate the significance levels, but it's not even clear this value is meaningful
-tests.thomas <- lapply(envs.thomas, function(X) lapply(X, mad.test))
-sapply(tests.thomas, function(X) length(X)*min(sapply(X, function(t) t$p.value)))
-tests.matclust <- lapply(envs.matclust, function(X) lapply(X, mad.test))
-sapply(tests.matclust, function(X) length(X)*min(sapply(X, function(t) t$p.value)))
+tic <- proc.time()
+envs.thomas   <- grouped(multiGET.composite, data, fit.thomas, c(Gest), alpha=0.05, type='area')
+envs.matclust <- grouped(multiGET.composite, data, fit.matclust, c(Gest), alpha=0.05, type='area')
+proc.time() - tic
+multiGET.plot(envs.thomas)
+multiGET.plot(envs.matclust)
