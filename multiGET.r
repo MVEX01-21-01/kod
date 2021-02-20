@@ -1,3 +1,4 @@
+library(spatstat)
 library(GET)
 library(gridExtra)
 library(future.apply)
@@ -44,32 +45,27 @@ multiGET.composite <- function(X, fit, stat, alpha=0.05, type='erl', parallel=F,
     nsim2 <- nsim
   }
   
-  p <- progressor(length(X) * (nsim + 1))
+  p <- progressor(along = X)
   rfit <- partial.r(fit)
-  future_Map(function(ppp, id) {
-    p(sprintf('%d/%d: null simulations', id, length(X)))
-    
+  future_lapply(X, function(ppp) {
     range <- rrange(stat(ppp))
     # 1. estimates already obtained through fit
     # 2. simulate null curve replicates
     enve2 <- envelope(ppp, stat, nsim=nsim2, simulate=rfit(fit, nsim2, ppp), r=range$r, savefuns=T, verbose=F)
     
     # 3. simulate and estimate null replicate parameters
-    p(sprintf('%d/%d: null fits', id, length(X)), amount=0)
     sims3 <- rfit(fit, nsim, ppp)
     fits3 <- Map(kppm, X=sims3, cluster=fit$internal$model, statistic=fit$info$fname)
     
     # 4. simulate composite curves
-    p(sprintf('%d/%d: simulations', id, length(X)), amount=0)
     enve4 <- Map(function(ppp, fit) {
-      p()
       envelope(ppp, stat, nsim=nsim2, simulate=rfit(fit, nsim2, ppp), r=range$r, savefuns=T, verbose=F)
     }, ppp=sims3, fit=fits3)
     
     # 5-7. construct envelopes
-    p(sprintf('%d/%d: constructing envelopes', id, length(X)), amount=0)
+    p()
     GET.composite(X=enve2, X.ls=enve4, r_min=range$rmin, r_max=range$rmax, type=type, alpha=gamma)
-  }, X, 1:length(X), future.seed=T)
+  }, future.seed=T)
 }
 
 # Retrieve the minimum p (closest to rejection) in each group

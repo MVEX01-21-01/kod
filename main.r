@@ -3,23 +3,8 @@ library(ggplot2)
 theme_set(theme_minimal())
 library(spatstat)
 
-# Helper function splitting over groups.
-# This enables us to write functions in terms of a single set of patterns,
-# and then using this function compose to groups
-#grouped <- function(f, data, ...) anylapply(split(data$ppp, data$g), f, ...)
-grouped <- function(f, data, ..., SIMPLIFY=F) {
-  as.anylist(mapply(f, split(data$ppp, data$g), ..., SIMPLIFY=SIMPLIFY))
-}
-
-
 # Load data ====================================================================
-data_moderate <- readRDS('ENDPOINT_DATA/CALF_MODERATE')
-data_normal   <- readRDS('ENDPOINT_DATA/CALF_NORMAL')
-data <- hyperframe(
-  g = factor(rep.int(c('MODERATE', 'NORMAL'), c(length(data_moderate), length(data_normal)))),
-  ppp = c(data_moderate, data_normal)
-)
-
+source('load_data.r')
 
 # Box plot factored by group of per observation parameter fits =================
 params.each <- function(X, cluster) {
@@ -44,37 +29,9 @@ ggplot(data.params, aes(group, value)) +
 
 
 # Estimating bar(K) ============================================================
-# Estimating bar(lambda) from aggregation recipe in Illian (eq 4.7.1)
-intensitybar <- function(X) {
-  intensities <- sapply(X, intensity)
-  areas <- sapply(X, area)
-  areas.sum <- sum(areas)
-  sum(intensities * areas / areas.sum) 
-}
+source('repcluster.r')
 
-# Estimating bar(K) from list of patterns
-Kbar <- function(X, ...) pool(anylapply(X, Kest, ..., ratio=T))
-
-# Fit cluster model to data hyperframe based on bar(K) estimate
-repcluster.estK <- function(hX, cluster, startpars=NULL, lambda=NULL, ...) {
-  info <- spatstatClusterModelInfo(cluster)
-  estK <- match.fun(paste(tolower(cluster), '.estK', sep=''))
-  if (!is.null(startpars))
-    startpars <- anylapply(startpar, info$checkpar)
-  else {
-    # just take an average of suggested starting params
-    # (as long as we're not too far off, it's ok. This agrees with what
-    #  kppm computes for single pattern estimates)
-    startpars <- grouped(function(lppp) rowMeans(sapply(lppp, info$selfstart)), hX)
-  }
-  if (is.null(lambda))
-    lambda <- grouped(intensitybar, hX)
-  
-  K <- grouped(Kbar, hX, correction='best')
-  as.anylist(apply(cbind(Kbar=K, par=startpars, lambda=lambda), 1,
-                   function(row) estK(row$Kbar, startpar=row$par, lambda=row$lambda, ...)))
-}
-
+# Estimate bar(K) for each group
 K <- grouped(Kbar, data, correction='iso')
 
 # Plot
@@ -111,13 +68,11 @@ plotfit(fit.matclust)
 
 
 # Envelope test ----
-library(future.apply)
-library(progressr)
 source('multiGET.r')
 
-# Compute the envelopes, using *multiprocessing* (in supported environments)
-plan(multicore)
-handlers(list(handler_progress(':spin [:bar] :percent in :elapsed ETA :eta (:message)')))
+# Compute the envelopes
+# (Can be done using multiprocessing: check batch_envelopes.r)
+handlers(list(handler_progress(':spin [:bar] :percent (:current/:total) in :elapsed(:tick_rate) ETA :eta')))
 with_progress({
   envs.thomas   <- grouped(multiGET.composite, data, fit.thomas, c(Gest), alpha=0.05, type='erl', nsim=299)
   envs.matclust <- grouped(multiGET.composite, data, fit.matclust, c(Gest), alpha=0.05, type='erl', nsim=299)
