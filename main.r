@@ -111,12 +111,16 @@ plotfit(fit.matclust)
 
 
 # Envelope test ----
+library(future.apply)
+library(progressr)
 source('multiGET.r')
 
-# Compute the envelopes
-tic <- proc.time()
-envs.thomas   <- grouped(multiGET.composite, data, fit.thomas, c(Gest), alpha=0.05, type='area')
-envs.matclust <- grouped(multiGET.composite, data, fit.matclust, c(Gest), alpha=0.05, type='area')
-proc.time() - tic
+# Compute the envelopes, using *multiprocessing* (in supported environments)
+plan(multicore)
+handlers(list(handler_progress(':spin [:bar] :percent in :elapsed ETA :eta (:message)')))
+with_progress({
+  envs.thomas   <- grouped(multiGET.composite, data, fit.thomas, c(Gest), alpha=0.05, type='erl', nsim=299)
+  envs.matclust <- grouped(multiGET.composite, data, fit.matclust, c(Gest), alpha=0.05, type='erl', nsim=299)
+})
 multiGET.plot(envs.thomas)
 multiGET.plot(envs.matclust)
