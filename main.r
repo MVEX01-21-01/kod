@@ -72,10 +72,12 @@ source('multiGET.r')
 
 # Compute the envelopes
 # (Can be done using multiprocessing: check batch_envelopes.r)
-handlers(list(handler_progress(':spin [:bar] :percent (:current/:total) in :elapsed(:tick_rate) ETA :eta')))
+handlers(handler_rstudio())
 with_progress({
-  envs.thomas   <- grouped(multiGET.composite, data, fit.thomas, c(Gest), alpha=0.05, type='erl', nsim=299)
-  envs.matclust <- grouped(multiGET.composite, data, fit.matclust, c(Gest), alpha=0.05, type='erl', nsim=299)
+  p <- progressor(2*length(data$ppp))
+  rp <- progress_aggregator(p)
+  rp(envs.thomas   <- grouped(multiGET.composite, data, fit.thomas, c(Gest), alpha=0.1, type='erl'))
+  rp(envs.matclust <- grouped(multiGET.composite, data, fit.matclust, c(Gest), alpha=0.1, type='erl'))
 })
 multiGET.plot(envs.thomas)
 multiGET.plot(envs.matclust)

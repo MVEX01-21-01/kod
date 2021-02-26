@@ -9,12 +9,12 @@ fit.thomas   <- repcluster.estK(data, 'Thomas')
 fit.matclust <- repcluster.estK(data, 'MatClust')
 source('multiGET.r')
 
-# Envelopes ----
 plan(multicore)
-handlers(list(handler_progress(':spin [:bar] :percent (:current/:total) in :elapsed(:tick_rate) ETA :eta')))
-with_progress({
-  envs.thomas   <- grouped(multiGET.composite, data, fit.thomas, c(Gest), alpha=0.05, type='erl', nsim=299)
-  envs.matclust <- grouped(multiGET.composite, data, fit.matclust, c(Gest), alpha=0.05, type='erl', nsim=299)
-})
+handlers(handler_progress(':spin [:bar] :percent (:current/:total) in :elapsed(:tick_rate) ETA :eta'))
+handlers(global=T)
+
+# Envelopes ----
+envs.thomas   <- grouped(multiGET.composite, data, fit.thomas, c(Gest), alpha=0.05, type='erl', nsim=299)
+envs.matclust <- grouped(multiGET.composite, data, fit.matclust, c(Gest), alpha=0.05, type='erl', nsim=299)
 
 saveRDS(list(Thomas=envs.thomas, MatClust=envs.matclust), file = 'envs.rds')

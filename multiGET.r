@@ -35,7 +35,7 @@ rrange <- function(obs) {
 # null hypothesis represented by a model fit, at significance level alpha.
 # The test statistic is determined by stat.
 # Supports parallel work!
-multiGET.composite <- function(X, fit, stat, alpha=0.05, type='erl', parallel=F, nsim=NULL, nsim2=NULL) {
+multiGET.composite <- function(X, fit, stat, alpha=0.05, type='erl', nsim=NULL, nsim2=NULL) {
   # significance required for each
   gamma <- msignf(length(X), alpha)
   if (is.null(nsim)) {
@@ -45,7 +45,7 @@ multiGET.composite <- function(X, fit, stat, alpha=0.05, type='erl', parallel=F,
     nsim2 <- nsim
   }
   
-  p <- progressor(along = X)
+  p <- progressor(along=X)
   rfit <- partial.r(fit)
   future_lapply(X, function(ppp) {
     range <- rrange(stat(ppp))
