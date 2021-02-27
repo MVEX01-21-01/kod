@@ -14,7 +14,7 @@ handlers(handler_progress(':spin [:bar] :percent (:current/:total) in :elapsed(:
 handlers(global=T)
 
 # Envelopes ----
-envs.thomas   <- grouped(multiGET.composite, data, fit.thomas, c(Gest), alpha=0.05, type='erl', nsim=299)
-envs.matclust <- grouped(multiGET.composite, data, fit.matclust, c(Gest), alpha=0.05, type='erl', nsim=299)
+envs.thomas   <- grouped(multiGET.composite, data, fit.thomas, c(Gest), alpha=0.05, type='erl', nsim=499)
+envs.matclust <- grouped(multiGET.composite, data, fit.matclust, c(Gest), alpha=0.05, type='erl', nsim=499)
 
-saveRDS(list(Thomas=envs.thomas, MatClust=envs.matclust), file = 'envs.rds')
+saveRDS(list(Thomas=envs.thomas, MatClust=envs.matclust), file = 'envs499.rds')
