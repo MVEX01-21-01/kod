@@ -25,17 +25,25 @@ rFit <- function(fit, nsim, win) partial.r(fit)(fit, nsim, win)
 # Helper function to obtain range from statistic
 rrange <- function(obs) {
   argname <- fvnames(obs, '.x')
-  #valname <- fvnames(obs, '.y')
+  
   r <- obs[[argname]]
   alims <- attr(obs, 'alim')
   list(r=r, rmin=alims[1], rmax=alims[2])
 }
 
-# Generate multiple global envelopes for a set of patterns, under a composite
-# null hypothesis represented by a model fit, at significance level alpha.
-# The test statistic is determined by stat.
-# Supports parallel work!
-multiGET.composite <- function(X, fit, stat, alpha=0.05, type='erl', nsim=NULL, nsim2=NULL) {
+#' Generate multiple global envelopes for a set of patterns, under a composite
+#' null hypothesis represented by a model fit, at significance level alpha.
+#' The test statistic is determined by stat.
+#' @param X Set of patterns to test agains
+#' @param fit Fit representing null hypothesis, type minconfit
+#' @param stat Function calculating statstic to test with from ppp
+#' @param alpha Significance level for envelopes
+#' @param type Type of global envelope, according to GET types
+#' @param nsim Number of subtests n
+#' @param nsim2 Number of simulations s-1
+#' @param raw Whether to pass through spatstat envelope logic
+#' @return A global envelope
+multiGET.composite <- function(X, fit, stat, alpha=0.05, type='erl', nsim=NULL, nsim2=NULL, raw=F) {
   # significance required for each
   gamma <- msignf(length(X), alpha)
   if (is.null(nsim)) {
@@ -48,19 +56,37 @@ multiGET.composite <- function(X, fit, stat, alpha=0.05, type='erl', nsim=NULL, 
   p <- progressor(along=X)
   rfit <- partial.r(fit)
   future_lapply(X, function(ppp) {
-    range <- rrange(stat(ppp))
+    obs <- stat(ppp)
+    range <- rrange(obs)
     # 1. estimates already obtained through fit
     # 2. simulate null curve replicates
-    enve2 <- envelope(ppp, stat, nsim=nsim2, simulate=rfit(fit, nsim2, ppp), r=range$r, savefuns=T, verbose=F)
+    if (!raw) {
+      enve2 <- envelope(ppp, stat, nsim=nsim2, simulate=rfit(fit, nsim2, ppp), r=range$r, savefuns=T, verbose=F)
+    } else {
+      valname <- fvnames(obs, '.y')
+      sims2 <- rfit(fit, nsim2, ppp)
+      stats2 <- sapply(sims2, function(i) stat(i, r=range$r)[[valname]])
+      enve2 <- create_curve_set(list(r=range$r, obs=obs[[valname]], sim_m=stats2, theo=obs[['theo']]))
+    }
     
     # 3. simulate and estimate null replicate parameters
     sims3 <- rfit(fit, nsim, ppp)
     fits3 <- Map(kppm, X=sims3, cluster=fit$internal$model, statistic=fit$info$fname)
     
     # 4. simulate composite curves
-    enve4 <- Map(function(ppp, fit) {
-      envelope(ppp, stat, nsim=nsim2, simulate=rfit(fit, nsim2, ppp), r=range$r, savefuns=T, verbose=F)
-    }, ppp=sims3, fit=fits3)
+    if (!raw) {
+      enve4 <- Map(function(ppp, fit) {
+        envelope(ppp, stat, nsim=nsim2, simulate=rfit(fit, nsim2, ppp), r=range$r, savefuns=T, verbose=F)
+      }, ppp=sims3, fit=fits3)
+    } else {
+      enve4 <- Map(function(ppp, fit) {
+        obs <- stat(ppp)
+        sims4 <- rfit(fit, nsim2, ppp)
+        stats4 <- sapply(sims4, function(i) stat(i, r=range$r)[[valname]])
+        enve4 <- create_curve_set(list(r=range$r, obs=obs[[valname]], sim_m=stats4, theo=obs[['theo']]))
+      }, ppp=sims3, fit=fits3)
+    }
+    
     
     # 5-7. construct envelopes
     p()
