@@ -1,18 +1,27 @@
 # Estimating bar(lambda) from aggregation recipe in Illian (eq 4.7.1)
 intensitybar <- function(X) {
-  intensities <- sapply(X, intensity)
-  areas <- sapply(X, area)
-  areas.sum <- sum(areas)
-  sum(intensities * areas / areas.sum) 
+  weighted.mean(sapply(X, intensity), sapply(X, area))
 }
 
 # Estimating bar(K) from list of patterns
 Kbar <- function(X, ...) pool(anylapply(X, Kest, ..., ratio=T))
 
-# Fit cluster model to data hyperframe based on bar(K) estimate
+# Estimating bar(L) from list of patterns
+Lbar <- function(X, ...) pool(anylapply(X, Lest, ..., ratio=T))
+
+# Estimating bar(rho) from list of patterns
+pcfbar <- function(X, ...) pool(anylapply(X, pcf, ..., ratio=T))
+
+# Fit cluster model to data hyperframe based on estimate
 repcluster.estK <- function(hX, cluster, startpars=NULL, lambda=NULL, ...) {
+  repcluster_(hX, cluster, 'estK', Kbar, startpars, lambda, ...)
+}
+repcluster.estpcf <- function(hX, cluster, startpars=NULL, lambda=NULL, ...) {
+  repcluster_(hX, cluster, 'estpcf', pcfbar, startpars, lambda, ...)
+}
+repcluster_ <- function(hX, cluster, estfn, fitfn, startpars=NULL, lambda=NULL, ...) {
   info <- spatstatClusterModelInfo(cluster)
-  estK <- match.fun(paste(tolower(cluster), '.estK', sep=''))
+  estfn <- match.fun(paste(tolower(cluster), '.', estfn, sep=''))
   if (!is.null(startpars))
     startpars <- anylapply(startpar, info$checkpar)
   else {
@@ -24,7 +33,7 @@ repcluster.estK <- function(hX, cluster, startpars=NULL, lambda=NULL, ...) {
   if (is.null(lambda))
     lambda <- grouped(intensitybar, hX)
   
-  K <- grouped(Kbar, hX, correction='best')
-  as.anylist(apply(cbind(Kbar=K, par=startpars, lambda=lambda), 1,
-                   function(row) estK(row$Kbar, startpar=row$par, lambda=row$lambda, ...)))
+  S <- grouped(fitfn, hX, correction='best')
+  as.anylist(apply(cbind(S=S, par=startpars, lambda=lambda), 1,
+                   function(row) estfn(row$S, startpar=row$par, lambda=row$lambda, ...)))
 }

@@ -5,8 +5,11 @@
 library(spatstat)
 source('load_data.r')
 source('repcluster.r')
-fit.thomas   <- repcluster.estK(data, 'Thomas')
-fit.matclust <- repcluster.estK(data, 'MatClust')
+#fit.thomas   <- repcluster.estK(data, 'Thomas')
+#fit.matclust <- repcluster.estK(data, 'MatClust')
+fit.thomas   <- repcluster.estpcf(data, 'Thomas')
+fit.matclust <- repcluster.estpcf(data, 'MatClust')
+out <- 'envs499_pcf.rds' #'envs499.rds'
 source('multiGET.r')
 
 plan(multicore)
@@ -17,4 +20,4 @@ handlers(global=T)
 envs.thomas   <- grouped(multiGET.composite, data, fit.thomas, c(Gest), alpha=0.05, type='erl', nsim=499)
 envs.matclust <- grouped(multiGET.composite, data, fit.matclust, c(Gest), alpha=0.05, type='erl', nsim=499)
 
-saveRDS(list(Thomas=envs.thomas, MatClust=envs.matclust), file = 'envs499.rds')
+saveRDS(list(Thomas=envs.thomas, MatClust=envs.matclust), file=out)
