@@ -27,6 +27,9 @@ data.params <- rbind(longparams(fit.each.thomas, 'Thomas', data$g),
 ggplot(data.params, aes(group, value)) +
   geom_boxplot() + facet_wrap(~ model + param, scales='free')
 
+# Envelopes for each individual pattern ========================================
+# see batch_single_envelopes.r
+
 # Analysing aggregate summary statistics =======================================
 source('repcluster.r')
 
