@@ -116,3 +116,9 @@ multiGET.plot <- function(tests) {
   }, tests, names(tests), SIMPLIFY=F), ncol=length(tests))
 }
 
+# For single envelopes
+multiGET.plot.single <- function(tests) {
+  grid.arrange(grobs=lapply(tests, function(test) {
+    plot(test[[1]])
+  }))
+}
