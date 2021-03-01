@@ -35,7 +35,7 @@ rrange <- function(obs) {
 #' null hypothesis represented by a model fit, at significance level alpha.
 #' The test statistic is determined by stat.
 #' @param X Set of patterns to test agains
-#' @param fit Fit representing null hypothesis, type minconfit
+#' @param fit Fit representing null hypothesis, class minconfit/kppm
 #' @param stat Function calculating statstic to test with from ppp
 #' @param alpha Significance level for envelopes
 #' @param type Type of global envelope, according to GET types
@@ -52,9 +52,19 @@ multiGET.composite <- function(X, fit, stat, alpha=0.05, type='erl', nsim=NULL, 
   if (is.null(nsim2)) {
     nsim2 <- nsim
   }
-  
   p <- progressor(along=X)
-  rfit <- partial.r(fit)
+  if (class(fit)[1] == 'minconfit') {
+    rfit <- partial.r(fit)
+    fitcluster <- fit$internal$model
+    fitstat <- fit$info$fname
+  } else if (class(fit)[1] == 'kppm') {
+    rfit <- function(fit, nsim, ppp) simulate.kppm(fit, nsim=nsim, window=as.owin(ppp), verbose=F)
+    fitcluster <- fit$clusters
+    fitstat <- fit$Fit$statistic
+  } else {
+    stop('fit not of class minconfit/kppm')
+  }
+  
   future_lapply(X, function(ppp) {
     obs <- stat(ppp)
     range <- rrange(obs)
@@ -71,7 +81,7 @@ multiGET.composite <- function(X, fit, stat, alpha=0.05, type='erl', nsim=NULL, 
     
     # 3. simulate and estimate null replicate parameters
     sims3 <- rfit(fit, nsim, ppp)
-    fits3 <- Map(kppm, X=sims3, cluster=fit$internal$model, statistic=fit$info$fname)
+    fits3 <- Map(kppm, X=sims3, cluster=fitcluster, statistic=fitstat)
     
     # 4. simulate composite curves
     if (!raw) {
