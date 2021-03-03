@@ -7,8 +7,8 @@ grouped <- function(f, data, ..., SIMPLIFY=F) {
 }
 
 # Load data
-data_moderate <- readRDS('ENDPOINT_DATA/CALF_MODERATE')
-data_normal   <- readRDS('ENDPOINT_DATA/CALF_NORMAL')
+data_moderate <- readRDS('DATA_ENFS/CALF_MODERATE')
+data_normal   <- readRDS('DATA_ENFS/CALF_NORMAL')
 data <- hyperframe(
   g = factor(rep.int(c('MODERATE', 'NORMAL'), c(length(data_moderate), length(data_normal)))),
   ppp = c(data_moderate, data_normal)
