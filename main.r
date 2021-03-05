@@ -42,9 +42,13 @@ plot(K, sqrt(cbind(pooltheo,pooliso,hiiso,loiso)/pi)-r~r,
 
 # Estimate bar(rho) for each group
 pcfb <- grouped(pcfbar, data, correction='iso')
+pcf_d <- grouped(pcfbar, data, correction='iso', divisor='d')
 
 # Plot
 plot(pcfb, cbind(pooltheo,pooliso,hiiso,loiso)~r,
+     shade=c('hiiso', 'loiso'), equal.scales=T)
+
+plot(pcf_d, cbind(pooltheo,pooliso,hiiso,loiso)~r,
      shade=c('hiiso', 'loiso'), equal.scales=T)
 
 
