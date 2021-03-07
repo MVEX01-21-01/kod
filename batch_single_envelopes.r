@@ -6,7 +6,8 @@ out <- paste('envs', nsim, '_single.rds', sep='')
 
 # Initialize and fit models ----
 library(spatstat)
-source('load_data.r')
+source('util.r')
+data <- loaddata()
 source('multiGET.r')
 
 plan(multicore)

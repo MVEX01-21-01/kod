@@ -7,7 +7,8 @@ out <- paste('envs', nsim, '.rds', sep='')
 
 # Initialize and fit models ----
 library(spatstat)
-source('load_data.r')
+source('util.r')
+data <- loaddata()
 source('repcluster.r')
 fit.thomas   <- repcluster.estK(data, 'Thomas')
 fit.matclust <- repcluster.estK(data, 'MatClust')

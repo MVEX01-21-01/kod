@@ -3,13 +3,10 @@ library(ggplot2)
 theme_set(theme_minimal())
 library(spatstat)
 
-# Load data ====================================================================
-source('load_data.r')
+source('util.r')
+data <- loaddata()
 
 # Box plot factored by group of per observation parameter fits =================
-params.each <- function(X, cluster) {
-  sapply(mapply(kppm, X=X, cluster=cluster, SIMPLIFY=F), function(fit) fit$clustpar)
-}
 fit.each.thomas   <- params.each(data$ppp, 'Thomas')
 fit.each.matclust <- params.each(data$ppp, 'MatClust')
 longparams <- function(pars, model, group) {
@@ -41,13 +38,12 @@ plot(K, sqrt(cbind(pooltheo,pooliso,hiiso,loiso)/pi)-r~r,
      shade=c('hiiso', 'loiso'), equal.scales=T)
 
 # Estimate bar(rho) for each group
-pcfb <- grouped(pcfbar, data, correction='iso')
+pcf_ <- grouped(pcfbar, data, correction='iso')
 pcf_d <- grouped(pcfbar, data, correction='iso', divisor='d')
 
 # Plot
-plot(pcfb, cbind(pooltheo,pooliso,hiiso,loiso)~r,
+plot(pcf_, cbind(pooltheo,pooliso,hiiso,loiso)~r,
      shade=c('hiiso', 'loiso'), equal.scales=T)
-
 plot(pcf_d, cbind(pooltheo,pooliso,hiiso,loiso)~r,
      shade=c('hiiso', 'loiso'), equal.scales=T)
 
@@ -88,13 +84,13 @@ plotfit.g(fit.matclust.g)
 source('multiGET.r')
 
 # Compute the envelopes
-# (Can be done using multiprocessing: check batch_envelopes.r)
+# (Can be done using multiprocessing: check batch_multi_envelopes.r)
 handlers(handler_rstudio())
 with_progress({
   p <- progressor(2*length(data$ppp))
   rp <- progress_aggregator(p)
-  rp(envs.thomas   <- grouped(multiGET.composite, data, fit.thomas.K, c(Gest), alpha=0.1, type='erl'))
-  rp(envs.matclust <- grouped(multiGET.composite, data, fit.matclust.K, c(Gest), alpha=0.1, type='erl'))
+  rp(envs.thomas   <- grouped(multiGET.composite, data, fit.thomas.K, c(Gest), alpha=0.05, type='erl'))
+  rp(envs.matclust <- grouped(multiGET.composite, data, fit.matclust.K, c(Gest), alpha=0.05, type='erl'))
 })
 multiGET.plot(envs.thomas)
 multiGET.plot(envs.matclust)

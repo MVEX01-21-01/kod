@@ -109,11 +109,8 @@ minp <- function(envs) min(sapply(envs, function(e) attr(e, "p")))
 
 # Show all envelopes in all groups
 multiGET.plot <- function(tests) {
-  grid.arrange(grobs=mapply(function(group, name) {
-    p <- 1 - (1 - minp(group))^length(group)
-    arrangeGrob(grobs=mapply(function(env, who) plot(env) + labs(caption=who),
-                             group, names(group), SIMPLIFY=F), top=paste(name, ": p =", p))
-  }, tests, names(tests), SIMPLIFY=F), ncol=length(tests))
+  topfun <- function(group, test) paste(": p =", 1 - (1 - minp(group))^length(group))
+  groupplot(tests, topfun=topfun)
 }
 
 # For single envelopes
