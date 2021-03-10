@@ -26,16 +26,7 @@ grid.arrange(grobs=lapply(1:nrow(data), function(i) {
 # CSR ==========================================================================
 # Under the model hypotheses, the parent points (which we take to be the
 # branching points in this case) should be CSR
-csr.envs <- grouped(function(Xs) {
-  lapply(Xs, function(X) {
-    env <- envelope(X, nsim=999, savefuns=T, fun=Lest,
-                    simulate=expression(runifpoint(ex=X)), transform=expression(.-r),
-                    correction='trans')
-    global_envelope_test(env,type='erl')
-  })
-}, data.branching)
-
-groupplot(csr.envs)
+groupplot(grouped(csrenvs, data.branching, nsim=999))
 
 # Compare direct kappa estimates with fitted params ============================
 deviations <- function(Xs, Refs, cluster) {

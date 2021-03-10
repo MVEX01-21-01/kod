@@ -36,3 +36,14 @@ groupplot <- function(groups, topfun=NULL) {
                           group, names(group)), top=switch(is.null(topfun)+1,paste(name, topfun(group, x)),name))
   }, groups, names(groups)), ncol=length(groups))
 }
+
+# Helper function performing CSR tests using L(r) and
+# GET logic on a list of ppps.
+csrenvs <- function(Xs, nsim=999) {
+  lapply(Xs, function(X) {
+    env <- envelope(X, nsim=nsim, savefuns=T, fun=Lest,
+                    simulate=expression(runifpoint(ex=X)), transform=expression(.-r),
+                    correction='trans')
+    global_envelope_test(env,type='erl')
+  })
+}

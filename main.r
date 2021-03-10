@@ -7,22 +7,7 @@ source('util.r')
 data <- loaddata()
 
 # Box plot factored by group of per observation parameter fits =================
-fit.each.thomas   <- params.each(data$ppp, 'Thomas')
-fit.each.matclust <- params.each(data$ppp, 'MatClust')
-longparams <- function(pars, model, group) {
-  # reshape the data into easily visualized format
-  df <- data.frame(t(pars), model, group)
-  varying <- colnames(df)[1:(ncol(df)-2)]
-  df <- reshape(df, direction='long', varying=varying, v.names='value',
-          timevar='param', times=varying)
-  rownames(df) <- NULL
-  df
-}
-
-data.params <- rbind(longparams(fit.each.thomas, 'Thomas', data$g),
-                     longparams(fit.each.matclust, 'MatClust', data$g))
-ggplot(data.params, aes(group, value)) +
-  geom_boxplot() + facet_wrap(~ model + param, scales='free')
+# see report.r
 
 # Envelopes for each individual pattern ========================================
 # see batch_single_envelopes.r
