@@ -3,6 +3,7 @@
 library(ggplot2)
 theme_set(theme_minimal())
 library(spatstat)
+source('plotting.r')
 source('util.r')
 data <- loaddata()
 data.branching <- loaddata.branching()
@@ -26,7 +27,7 @@ grid.arrange(grobs=lapply(1:nrow(data), function(i) {
 # CSR ==========================================================================
 # Under the model hypotheses, the parent points (which we take to be the
 # branching points in this case) should be CSR
-groupplot(grouped(csrenvs, data.branching, nsim=999))
+plot.envs.grouped(grouped(csrenvs, data.branching, nsim=999))
 
 # Compare direct kappa estimates with fitted params ============================
 deviations <- function(Xs, Refs, cluster) {

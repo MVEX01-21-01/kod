@@ -15,6 +15,7 @@ loaddata.branching <- function() {
     ppp = c(data_moderate, data_normal)
   )
 }
+loadenv <- function(env) readRDS(paste('envelopes/', env, sep=''))
 
 # Helper function splitting over groups.
 # This enables us to write functions in terms of a single set of patterns,
@@ -26,15 +27,7 @@ grouped <- function(f, data, ..., SIMPLIFY=F) {
 
 # Helper function obtaining fit parameters for a list of patterns
 params.each <- function(X, cluster) {
-  sapply(Map(kppm, X=X, cluster=cluster), function(fit) fit$clustpar)
-}
-
-# Helper function plotting nested and factored lists
-groupplot <- function(groups, topfun=NULL) {
-  grid.arrange(grobs=Map(function(group, name) {
-    arrangeGrob(grobs=Map(function(x, who) plot(x) + labs(tag=who),
-                          group, names(group)), top=switch(is.null(topfun)+1,paste(name, topfun(group, x)),name))
-  }, groups, names(groups)), ncol=length(groups))
+  sapply(Map(kppm, X=X, cluster=cluster), function(fit) c(fit$clustpar, mu=fit$mu))
 }
 
 # Helper function performing CSR tests using L(r) and

@@ -106,16 +106,3 @@ multiGET.composite <- function(X, fit, stat, alpha=0.05, type='erl', nsim=NULL, 
 
 # Retrieve the minimum p (closest to rejection) in each group
 minp <- function(envs) min(sapply(envs, function(e) attr(e, "p")))
-
-# Show all envelopes in all groups
-multiGET.plot <- function(tests) {
-  topfun <- function(group, test) paste(": p =", 1 - (1 - minp(group))^length(group))
-  groupplot(tests, topfun=topfun)
-}
-
-# For single envelopes
-multiGET.plot.single <- function(tests) {
-  grid.arrange(grobs=lapply(tests, function(test) {
-    plot(test[[1]])
-  }))
-}
