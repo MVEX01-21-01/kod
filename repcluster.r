@@ -4,7 +4,10 @@ intensitybar <- function(X) {
 }
 
 # Estimating bar(K) from list of patterns
+# Standard (ratio of sums weighted by n squared)
 Kbar <- function(X, ...) pool(anylapply(X, Kest, ..., ratio=T))
+# Linear (ratio of sums weighted by n)
+Kbar1 <- function(X, ...) pool(anylapply(X, Kest, ..., ratio=T), weights=sapply(X, npoints))
 
 # Estimating bar(L) from list of patterns
 Lbar <- function(X, ...) pool(anylapply(X, Lest, ..., ratio=T))
