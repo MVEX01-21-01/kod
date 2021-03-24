@@ -7,6 +7,10 @@ if (!dir.exists('DATA_ENFS')) {
   stop('Can\'t find pattern subdir DATA_ENFS. Check your working directory.')
 }
 
+# This is important for reproducibility!
+# But note that the pre-stored envelopes also have to be reproducibly generated.
+set.seed(012101)
+
 library(ggplot2)
 theme_set(theme_minimal())
 library(spatstat)
@@ -26,9 +30,9 @@ unlist1 <- function(l) lapply(l, function(i) i[[1]])
 
 
 # CSR test on patterns ==========
-envs.csr <- grouped(csrenvs, data, nsim=499)
+envs.csr <- grouped(csrenvs, data, nsim=999)
 g <- plot.envs.grouped(envs.csr)
-ggsave('report_out/csr.pdf', plot=g, width=6, height=5)
+ggsave('report_out/01_csr.pdf', plot=g, width=6, height=5)
 
 # Individual parameter fits ==========
 fit.each.thomas   <- params.each(data$ppp, 'Thomas')
@@ -47,16 +51,16 @@ data.params <- rbind(longparams(fit.each.thomas, 'Thomas', data$g),
                      longparams(fit.each.matclust, 'MatClust', data$g))
 g.indparams <- ggplot(data.params, aes(group, value)) +
   geom_boxplot() + facet_wrap(~ model + param, scales='free')
-ggsave('report_out/ind.box.pdf', plot=g.indparams, width=6, height=6)
+ggsave('report_out/02_ind.box.pdf', plot=g.indparams, width=6, height=6)
 
 # Individual envelopes ==========
 # Load pre-generated envelope, from batch_single_envelopes.r
 # TODO fix data format?
 envs.ind <- loadenv('envs199_single.rds')
 g <- plot.envs.single(unlist1(envs.ind$Thomas))
-ggsave('report_out/envs.ind.Thomas.pdf', plot=g, width=5, height=5)
+ggsave('report_out/03_envs.ind.Thomas.pdf', plot=g, width=5, height=5)
 g <- plot.envs.single(unlist1(envs.ind$MatClust))
-ggsave('report_out/envs.ind.MatClust.pdf', plot=g, width=5, height=5)
+ggsave('report_out/04_envs.ind.MatClust.pdf', plot=g, width=5, height=5)
 
 # Group parameter fits ==========
 ## Show the variance in individual K, and the fitted curves
@@ -84,7 +88,7 @@ Lgs <- Map(function(fv, th, mc) {
 }, K, fit.thomas.K, fit.matclust.K)
 Laux <- auxgrobs(Lgs[[1]])
 g <- combi.grouped(lapply(Lgs, function(g) list(g + labs(x=NULL, y=NULL) + theme(legend.position='none'))), aux=Laux)
-ggsave('report_out/bar.L.fit.pdf', plot=g, width=6, height=3.5)
+ggsave('report_out/05_bar.L.fit.pdf', plot=g, width=6, height=3.5)
 
 ## Overlay the group results on the boxplots
 df.fit <- rbind(
@@ -93,16 +97,38 @@ df.fit <- rbind(
 )
 df.fit[df.fit=='sigma' | df.fit=='R'] <- 'scale'
 g <- g.indparams + geom_point(data=df.fit, shape=3, color='red')
-ggsave('report_out/bar.box.pdf', plot=g, width=6, height=6)
+ggsave('report_out/06_bar.box.pdf', plot=g, width=6, height=6)
 
 # Group envelopes ==========
 # Load pre-generated envelope, from batch_multi_envelopes.r
 envs.group <- loadenv('envs499_K_2.rds')
 g <- plot.envs.grouped(envs.group$Thomas)
-ggsave('report_out/envs.bar.thomas.pdf', plot=g, width=5, height=5)
+ggsave('report_out/07_envs.bar.thomas.pdf', plot=g, width=5, height=5)
 g <- plot.envs.grouped(envs.group$MatClust)
-ggsave('report_out/envs.bar.matclust.pdf', plot=g, width=5, height=5)
+ggsave('report_out/08_envs.bar.matclust.pdf', plot=g, width=5, height=5)
 
 # 3.6 - Branching points analysis ==========
-# TODO for now, see branch_points.r
+# A nice plot of all patterns
+data.branching <- loaddata.branching()
+g <- grid.arrange(grobs=Map(pppplot, data$ppp, data.branching$ppp, names(data$ppp)))
+ggsave('report_out/09_patterns.branch.pdf', plot=g, width=8, height=7)
 
+# Under the model hypotheses, the parent points (which we take to be the
+# branching points in this case) should be CSR
+envs.csr.branching <- grouped(csrenvs, data.branching, nsim=999)
+g <- plot.envs.grouped(envs.csr.branching)
+ggsave('report_out/10_csr.branching.pdf', plot=g, width=6, height=5)
+
+# Compare direct kappa estimates with fitted params
+df.devis <- data.frame(
+  id=1:length(data$ppp), truth=sapply(data.branching$ppp, intensity),
+  thomas=fit.each.thomas['kappa',], matclust=fit.each.matclust['kappa',]
+)
+g <- ggplot(df.devis, aes(x=reorder(id, -rowMeans(cbind(thomas, matclust)-truth)))) +
+  geom_point(aes(y=truth, color='actual')) +
+  geom_point(aes(y=thomas, color='Thomas'), shape=15) +
+  geom_point(aes(y=matclust, color='MatClust'), shape=17) +
+  labs(x='pattern #', y=expression(italic(kappa))) +
+  scale_colour_manual(values=c(c("#444444"),c("#F7951F"),c("#0154A6"))) +
+  theme(legend.position='bottom', legend.title=element_blank())
+ggsave('report_out/11_deviations.pdf', plot=g, width=6, height=3.5)

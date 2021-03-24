@@ -54,17 +54,16 @@ combi.grouped <- function(groups, aux=NULL, ...) {
 
 # Envelopes ====
 # Extract a raw envelope grob
-envelopegrob <- function(envelope, noaxes=F) {
-  plot(envelope) +
+envelopegrob <- function(envelope, tag=NULL, noaxes=F) {
+  g <- plot(envelope) +
     switch(noaxes+1, theme(legend.position='none'), theme(legend.position='none', axis.text.x=element_blank(), axis.text.y=element_blank())) +
     labs(title=NULL, x=NULL, y=NULL)
-}
-
-# Extract a tagged envelope grob
-envelopegrob.tag <- function(envelope, tag, noaxes=F) {
-  envelopegrob(envelope, noaxes=noaxes) +
-    labs(tag=paste('#',tag, sep='')) +
-    theme(plot.tag.position = c(0.05, 0.95), plot.tag=theme_get()$axis.text)
+  if (!is.null(tag)) {
+    g <- g +
+      labs(tag=paste0('#',tag)) +
+      theme(plot.tag.position = c(0.05, 0.95), plot.tag=theme_get()$axis.text)
+  }
+  g
 }
 
 # Extract lims from envelope
@@ -79,11 +78,28 @@ envylim <- function(envelope) {
 plot.envs.single <- function(envelopes, noaxes=T) {
   # TODO common limits?
   aux <- auxgrobs(plot(envelopes[[1]]))
-  combi(Map(envelopegrob.tag, envelopes, names(envelopes), noaxes=noaxes), aux)
+  combi(Map(envelopegrob, envelopes, tag=names(envelopes), noaxes=noaxes), aux)
 }
 
 # Combine envelopes grouped
 plot.envs.grouped <- function(groups, noaxes=T) {
   aux <- auxgrobs(plot(groups[[1]][[1]]))
-  combi.grouped(lapply(groups, function(group) Map(envelopegrob.tag, group, names(group), noaxes=noaxes)), aux)
+  combi.grouped(lapply(groups, function(group) Map(envelopegrob, group, tag=names(group), noaxes=noaxes)), aux)
+}
+
+# Point patterns ====
+pppplot <- function(ppp, parent=NULL, tag=NULL) {
+  if (is.null(parent)) {
+    parent <- list(x=numeric(0),y=numeric(0))
+  }
+  if (!is.null(tag)) {
+    tag <- paste0('#',tag)
+  }
+  xlim <- ppp$window$xrange
+  ylim <- ppp$window$yrange
+  ggplot() + geom_point(aes(x=ppp$x, y=ppp$y), shape=1) +
+    geom_point(aes(x=parent$x, y=parent$y), size=3, shape=4) +
+    labs(title=NULL, tag=tag, x=NULL, y=NULL) + coord_fixed(xlim=xlim, ylim=ylim, expand=F, clip='off') +
+    theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank(),
+          panel.border = element_rect(color='gray', fill=NA, size=0.5), plot.tag=theme_get()$axis.text)
 }
