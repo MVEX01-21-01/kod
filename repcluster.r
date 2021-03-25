@@ -1,6 +1,6 @@
 # Estimating bar(lambda) from aggregation recipe in Illian (eq 4.7.1)
-intensitybar <- function(X) {
-  weighted.mean(sapply(X, intensity), sapply(X, area))
+intensitybar <- function(X, coeff=1) {
+  weighted.mean(sapply(X, intensity)*coeff, sapply(X, area))
 }
 
 # Estimating bar(K) from list of patterns
@@ -26,7 +26,7 @@ repcluster_ <- function(hX, cluster, estfn, fitfn, startpars=NULL, lambda=NULL, 
   info <- spatstatClusterModelInfo(cluster)
   estfn <- match.fun(paste(tolower(cluster), '.', estfn, sep=''))
   if (!is.null(startpars))
-    startpars <- anylapply(startpar, info$checkpar)
+    startpars <- anylapply(startpars, info$checkpar)
   else {
     # just take an average of suggested starting params
     # (as long as we're not too far off, it's ok. This agrees with what
@@ -39,4 +39,9 @@ repcluster_ <- function(hX, cluster, estfn, fitfn, startpars=NULL, lambda=NULL, 
   S <- grouped(fitfn, hX, correction='best')
   as.anylist(apply(cbind(S=S, par=startpars, lambda=lambda), 1,
                    function(row) estfn(row$S, startpar=row$par, lambda=row$lambda, ...)))
+}
+
+# Compute an alternative starting parameter set from branching obs
+startpars.branching <- function(dX, pX) {
+  c(kappa=intensitybar(pX), scale=2*mean(unlist(sapply(dX, nndist))))
 }

@@ -20,6 +20,7 @@ source('repcluster.r')
 source('multiGET.r')
 source('plotting.r')
 data <- loaddata()
+data.branching <- loaddata.branching()
 
 # Clean output directory
 unlink('report_out', recursive=T)
@@ -37,9 +38,17 @@ ggsave('report_out/01_csr.pdf', plot=g, width=6, height=5)
 # Individual parameter fits ==========
 fit.each.thomas   <- params.each(data$ppp, 'Thomas')
 fit.each.matclust <- params.each(data$ppp, 'MatClust')
-longparams <- function(pars, model, group) {
+paramrescale <- function(params, area) {
+  params2 <- as.data.frame(params)
+  params2['kappa',] <- params['kappa',] * area
+  rownames(params2)[rownames(params2) == 'kappa'] <- 'kappa*area'
+  params2
+}
+longparams <- function(pars, model, group, area=NULL) {
   # reshape the data into easily visualized format
-  df <- data.frame(t(pars), model, group)
+  if (!is.null(area))
+    pars <- paramrescale(pars, area)
+  df <- data.frame(t(pars), model, group, check.names=F)
   varying <- colnames(df)[1:(ncol(df)-2)]
   df <- reshape(df, direction='long', varying=varying, v.names='value',
                 timevar='param', times=varying)
@@ -47,8 +56,9 @@ longparams <- function(pars, model, group) {
   df
 }
 
-data.params <- rbind(longparams(fit.each.thomas, 'Thomas', data$g),
-                     longparams(fit.each.matclust, 'MatClust', data$g))
+areas <- sapply(data$ppp, area)
+data.params <- rbind(longparams(fit.each.thomas, 'Thomas', data$g, area=areas),
+                     longparams(fit.each.matclust, 'MatClust', data$g, area=areas))
 g.indparams <- ggplot(data.params, aes(group, value)) +
   geom_boxplot() + facet_wrap(~ model + param, scales='free')
 ggsave('report_out/02_ind.box.pdf', plot=g.indparams, width=6, height=6)
@@ -67,6 +77,11 @@ ggsave('report_out/04_envs.ind.MatClust.pdf', plot=g, width=5, height=5)
 K <- grouped(Kbar, data, correction='iso')
 fit.thomas.K <- repcluster.estK(data, 'Thomas')
 fit.matclust.K <- repcluster.estK(data, 'MatClust')
+
+brpars <- Map(startpars.branching, split(data$ppp, data$g), split(data.branching$ppp, data.branching$g))
+fit.thomas.K.br <- repcluster.estK(data, 'Thomas', startpars=brpars)
+fit.matclust.K.br <- repcluster.estK(data, 'MatClust', startpars=brpars)
+
 Llimits <- list(
   xmin = max(sapply(K, function(fv) min(fv$r))),
   xmax = min(sapply(K, function(fv) max(fv$r))),
@@ -92,11 +107,23 @@ ggsave('report_out/05_bar.L.fit.pdf', plot=g, width=6, height=3.5)
 
 ## Overlay the group results on the boxplots
 df.fit <- rbind(
-  longparams(rbind(sapply(fit.thomas.K, function(f) f$modelpar)), 'Thomas', c('MODERATE','NORMAL')),
-  longparams(rbind(sapply(fit.matclust.K, function(f) f$modelpar)), 'MatClust', c('MODERATE','NORMAL'))
+  longparams(rbind(sapply(fit.thomas.K, function(f) f$modelpar)), 'Thomas', c('MODERATE','NORMAL'), area=mean(areas)),
+  longparams(rbind(sapply(fit.matclust.K, function(f) f$modelpar)), 'MatClust', c('MODERATE','NORMAL'), area=mean(areas))
 )
 df.fit[df.fit=='sigma' | df.fit=='R'] <- 'scale'
-g <- g.indparams + geom_point(data=df.fit, shape=3, color='red')
+df.true <- data.frame(
+  model=rep(c('Thomas','MatClust'),each=4),
+  group=rep(c('MODERATE','NORMAL'),each=2,length.out=8),
+  param=rep(c('kappa*area','mu'),length.out=8),
+  value=rep(unlist(grouped(function(X, dX) {
+    ib <- intensitybar(X)
+    # NOTE: reweighted to kappa*area
+    c(intensitybar(X,coeff=sapply(X, area)), intensitybar(dX,coeff=1/ib))
+  }, data.branching, dX=split(data$ppp, data$g))),length.out=8)
+)
+g <- g.indparams +
+  geom_point(data=df.fit, shape=3, color='red') +
+  geom_point(data=df.true, shape=4, color='blue')
 ggsave('report_out/06_bar.box.pdf', plot=g, width=6, height=6)
 
 # Group envelopes ==========
@@ -109,7 +136,6 @@ ggsave('report_out/08_envs.bar.matclust.pdf', plot=g, width=5, height=5)
 
 # 3.6 - Branching points analysis ==========
 # A nice plot of all patterns
-data.branching <- loaddata.branching()
 g <- grid.arrange(grobs=Map(pppplot, data$ppp, data.branching$ppp, names(data$ppp)))
 ggsave('report_out/09_patterns.branch.pdf', plot=g, width=8, height=7)
 
