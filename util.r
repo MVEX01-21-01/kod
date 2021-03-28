@@ -4,7 +4,7 @@ loaddata <- function() {
   data_normal   <- readRDS('DATA_ENFS/CALF_NORMAL')
   hyperframe(
     g = factor(rep.int(c('MODERATE', 'NORMAL'), c(length(data_moderate), length(data_normal)))),
-    ppp = c(data_moderate, data_normal)
+    ppp = anylapply(c(data_moderate, data_normal),addunit)
   )
 }
 loaddata.branching <- function() {
@@ -12,10 +12,13 @@ loaddata.branching <- function() {
   data_normal   <- readRDS('DATA_ENFS/CALF_NORMAL_BRANCHING')
   hyperframe(
     g = factor(rep.int(c('MODERATE', 'NORMAL'), c(length(data_moderate), length(data_normal)))),
-    ppp = c(data_moderate, data_normal)
+    ppp = anylapply(c(data_moderate, data_normal),addunit)
   )
 }
 loadenv <- function(env) readRDS(paste('envelopes/', env, sep=''))
+
+# Helper function rescaling to proper unit
+addunit <- function(ppp) rescale(ppp,1,'µm')
 
 # Helper function splitting over groups.
 # This enables us to write functions in terms of a single set of patterns,

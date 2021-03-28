@@ -29,23 +29,34 @@ dir.create('report_out')
 # Helper to unnest single envelopes
 unlist1 <- function(l) lapply(l, function(i) i[[1]])
 
+# Helper to write csvsimple-safe csv
+write.csvX <- function(...) write.csv(..., row.names=F, quote=F)
+
+# General pattern information
+write.csvX(data.frame(id=1:length(data$ppp), n=sapply(data$ppp, npoints), W=sapply(data$ppp, area)), 'report_out/info.csv')
 
 # CSR test on patterns ==========
 envs.csr <- grouped(csrenvs, data, nsim=999)
 g <- plot.envs.grouped(envs.csr)
-ggsave('report_out/01_csr.pdf', plot=g, width=6, height=5)
+ggsave('report_out/01_csr.pdf', plot=g, width=5, height=5)
 
 # Individual parameter fits ==========
 fit.each.thomas   <- params.each(data$ppp, 'Thomas')
 fit.each.matclust <- params.each(data$ppp, 'MatClust')
+
+# Output csv of parameters
+write.csvX(data.frame(id=1:nrow(data),thomas=t(fit.each.thomas),matclust=t(fit.each.matclust)), 'report_out/ind.par.csv')
+
+# Helper function to rescale to kappa * area
 paramrescale <- function(params, area) {
   params2 <- as.data.frame(params)
   params2['kappa',] <- params['kappa',] * area
   rownames(params2)[rownames(params2) == 'kappa'] <- 'kappa*area'
   params2
 }
+
+# Helper function to reshape parameter data into a format better for ggplot
 longparams <- function(pars, model, group, area=NULL) {
-  # reshape the data into easily visualized format
   if (!is.null(area))
     pars <- paramrescale(pars, area)
   df <- data.frame(t(pars), model, group, check.names=F)
@@ -56,12 +67,13 @@ longparams <- function(pars, model, group, area=NULL) {
   df
 }
 
+# Calculate areas and parameter df
 areas <- sapply(data$ppp, area)
 data.params <- rbind(longparams(fit.each.thomas, 'Thomas', data$g, area=areas),
                      longparams(fit.each.matclust, 'MatClust', data$g, area=areas))
 g.indparams <- ggplot(data.params, aes(group, value)) +
   geom_boxplot() + facet_wrap(~ model + param, scales='free')
-ggsave('report_out/02_ind.box.pdf', plot=g.indparams, width=6, height=6)
+ggsave('report_out/02_ind.box.pdf', plot=g.indparams, width=5.2, height=5.2)
 
 # Individual envelopes ==========
 # Load pre-generated envelope, from batch_single_envelopes.r
@@ -77,6 +89,11 @@ ggsave('report_out/04_envs.ind.MatClust.pdf', plot=g, width=5, height=5)
 K <- grouped(Kbar, data, correction='iso')
 fit.thomas.K <- repcluster.estK(data, 'Thomas')
 fit.matclust.K <- repcluster.estK(data, 'MatClust')
+write.csvX(data.frame(
+  group=names(fit.thomas.K),
+  thomas=t(mapply(function(x) x$modelpar, fit.thomas.K)),
+  matclust=t(mapply(function(x) x$modelpar, fit.matclust.K))),
+  'report_out/bar.par.csv')
 
 brpars <- Map(startpars.branching, split(data$ppp, data$g), split(data.branching$ppp, data.branching$g))
 fit.thomas.K.br <- repcluster.estK(data, 'Thomas', startpars=brpars)
@@ -103,7 +120,7 @@ Lgs <- Map(function(fv, th, mc) {
 }, K, fit.thomas.K, fit.matclust.K)
 Laux <- auxgrobs(Lgs[[1]])
 g <- combi.grouped(lapply(Lgs, function(g) list(g + labs(x=NULL, y=NULL) + theme(legend.position='none'))), aux=Laux)
-ggsave('report_out/05_bar.L.fit.pdf', plot=g, width=6, height=3.5)
+ggsave('report_out/05_bar.L.fit.pdf', plot=g, width=5, height=3)
 
 ## Overlay the group results on the boxplots
 df.fit <- rbind(
@@ -124,7 +141,7 @@ df.true <- data.frame(
 g <- g.indparams +
   geom_point(data=df.fit, shape=3, color='red') +
   geom_point(data=df.true, shape=4, color='blue')
-ggsave('report_out/06_bar.box.pdf', plot=g, width=6, height=6)
+ggsave('report_out/06_bar.box.pdf', plot=g, width=5.2, height=5.2)
 
 # Group envelopes ==========
 # Load pre-generated envelope, from batch_multi_envelopes.r
@@ -137,24 +154,24 @@ ggsave('report_out/08_envs.bar.matclust.pdf', plot=g, width=5, height=5)
 # 3.6 - Branching points analysis ==========
 # A nice plot of all patterns
 g <- grid.arrange(grobs=Map(pppplot, data$ppp, data.branching$ppp, names(data$ppp)))
-ggsave('report_out/09_patterns.branch.pdf', plot=g, width=8, height=7)
+ggsave('report_out/09_patterns.branch.pdf', plot=g, width=5.2, height=5)
 
 # Under the model hypotheses, the parent points (which we take to be the
 # branching points in this case) should be CSR
 envs.csr.branching <- grouped(csrenvs, data.branching, nsim=999)
 g <- plot.envs.grouped(envs.csr.branching)
-ggsave('report_out/10_csr.branching.pdf', plot=g, width=6, height=5)
+ggsave('report_out/10_csr.branching.pdf', plot=g, width=5, height=5)
 
-# Compare direct kappa estimates with fitted params
+# Compare npoints with fitted params times area
 df.devis <- data.frame(
-  id=1:length(data$ppp), truth=sapply(data.branching$ppp, intensity),
-  thomas=fit.each.thomas['kappa',], matclust=fit.each.matclust['kappa',]
+  id=1:length(data$ppp), truth=sapply(data.branching$ppp, npoints),
+  thomas=fit.each.thomas['kappa',]*areas, matclust=fit.each.matclust['kappa',]*areas
 )
 g <- ggplot(df.devis, aes(x=reorder(id, -rowMeans(cbind(thomas, matclust)-truth)))) +
   geom_point(aes(y=truth, color='actual')) +
   geom_point(aes(y=thomas, color='Thomas'), shape=15) +
   geom_point(aes(y=matclust, color='MatClust'), shape=17) +
-  labs(x='pattern #', y=expression(italic(kappa))) +
+  labs(x='pattern #', y=expression(italic(kappa*abs(W)))) +
   scale_colour_manual(values=c(c("#444444"),c("#F7951F"),c("#0154A6"))) +
   theme(legend.position='bottom', legend.title=element_blank())
-ggsave('report_out/11_deviations.pdf', plot=g, width=6, height=3.5)
+ggsave('report_out/11_deviations.pdf', plot=g, width=5, height=3)
