@@ -75,16 +75,16 @@ envylim <- function(envelope) {
 }
 
 # Combine envelopes
-plot.envs.single <- function(envelopes, noaxes=T) {
+plot.envs.single <- function(envelopes, noaxes=T, ...) {
   # TODO common limits?
   aux <- auxgrobs(plot(envelopes[[1]]))
-  combi(Map(envelopegrob, envelopes, tag=names(envelopes), noaxes=noaxes), aux)
+  combi(Map(envelopegrob, envelopes, tag=names(envelopes), noaxes=noaxes), aux, ...)
 }
 
 # Combine envelopes grouped
-plot.envs.grouped <- function(groups, noaxes=T) {
+plot.envs.grouped <- function(groups, noaxes=T, ...) {
   aux <- auxgrobs(plot(groups[[1]][[1]]))
-  combi.grouped(lapply(groups, function(group) Map(envelopegrob, group, tag=names(group), noaxes=noaxes)), aux)
+  combi.grouped(lapply(groups, function(group) Map(envelopegrob, group, tag=names(group), noaxes=noaxes)), aux, ...)
 }
 
 # Point patterns ====

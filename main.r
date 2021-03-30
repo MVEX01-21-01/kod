@@ -36,9 +36,9 @@ write.csvX <- function(...) write.csv(..., row.names=F, quote=F)
 write.csvX(data.frame(id=1:length(data$ppp), n=sapply(data$ppp, npoints), W=sapply(data$ppp, area)), 'report_out/info.csv')
 
 # CSR test on patterns ==========
-envs.csr <- grouped(csrenvs, data, nsim=999)
-g <- plot.envs.grouped(envs.csr)
-ggsave('report_out/01_csr.pdf', plot=g, width=5, height=5)
+envs.csr <- csrenvs(data$ppp, nsim=999)
+g <- plot.envs.single(envs.csr, ncol=8)
+ggsave('report_out/01_csr.pdf', plot=g, width=5.5, height=3)
 
 # Individual parameter fits ==========
 fit.each.thomas   <- params.each(data$ppp, 'Thomas')
@@ -79,10 +79,10 @@ ggsave('report_out/02_ind.box.pdf', plot=g.indparams, width=5.2, height=5.2)
 # Load pre-generated envelope, from batch_single_envelopes.r
 # TODO fix data format?
 envs.ind <- loadenv('envs199_single.rds')
-g <- plot.envs.single(unlist1(envs.ind$Thomas))
-ggsave('report_out/03_envs.ind.Thomas.pdf', plot=g, width=5, height=5)
-g <- plot.envs.single(unlist1(envs.ind$MatClust))
-ggsave('report_out/04_envs.ind.MatClust.pdf', plot=g, width=5, height=5)
+g <- plot.envs.single(unlist1(envs.ind$Thomas), ncol=8)
+ggsave('report_out/03_envs.ind.Thomas.pdf', plot=g, width=5.5, height=3)
+g <- plot.envs.single(unlist1(envs.ind$MatClust), ncol=8)
+ggsave('report_out/04_envs.ind.MatClust.pdf', plot=g, width=5.5, height=3)
 
 # Group parameter fits ==========
 ## Show the variance in individual K, and the fitted curves
@@ -146,21 +146,21 @@ ggsave('report_out/06_bar.box.pdf', plot=g, width=5.2, height=5.2)
 # Group envelopes ==========
 # Load pre-generated envelope, from batch_multi_envelopes.r
 envs.group <- loadenv('envs499_K_2.rds')
-g <- plot.envs.grouped(envs.group$Thomas)
-ggsave('report_out/07_envs.bar.thomas.pdf', plot=g, width=5, height=5)
-g <- plot.envs.grouped(envs.group$MatClust)
-ggsave('report_out/08_envs.bar.matclust.pdf', plot=g, width=5, height=5)
+g <- plot.envs.grouped(envs.group$Thomas, ncol=4)
+ggsave('report_out/07_envs.bar.thomas.pdf', plot=g, width=5.5, height=3)
+g <- plot.envs.grouped(envs.group$MatClust, ncol=4)
+ggsave('report_out/08_envs.bar.matclust.pdf', plot=g, width=5.5, height=3)
 
 # 3.6 - Branching points analysis ==========
 # A nice plot of all patterns
 g <- grid.arrange(grobs=Map(pppplot, data$ppp, data.branching$ppp, names(data$ppp)))
-ggsave('report_out/09_patterns.branch.pdf', plot=g, width=5.2, height=5)
+ggsave('report_out/09_patterns.branch.pdf', plot=g, width=5.5, height=5)
 
 # Under the model hypotheses, the parent points (which we take to be the
 # branching points in this case) should be CSR
 envs.csr.branching <- grouped(csrenvs, data.branching, nsim=999)
-g <- plot.envs.grouped(envs.csr.branching)
-ggsave('report_out/10_csr.branching.pdf', plot=g, width=5, height=5)
+g <- plot.envs.grouped(envs.csr.branching, ncol=4)
+ggsave('report_out/10_csr.branching.pdf', plot=g, width=5.5, height=3)
 
 # Compare npoints with fitted params times area
 df.devis <- data.frame(

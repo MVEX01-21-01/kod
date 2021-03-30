@@ -2,7 +2,7 @@
 # (Useful for batch use and multiprocessing.)
 args <- commandArgs(trailingOnly=TRUE)
 nsim <- strtoi(args[1])
-out <- paste('envs', nsim, '_single.rds', sep='')
+out <- paste('envelopes/envs', nsim, '_single.rds', sep='')
 
 # Initialize and fit models ----
 library(spatstat)
