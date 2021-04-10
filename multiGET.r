@@ -52,7 +52,9 @@ multiGET.composite <- function(X, fit, stat, alpha=0.05, type='erl', nsim=NULL, 
   if (is.null(nsim2)) {
     nsim2 <- nsim
   }
-  p <- progressor(along=X)
+  
+  freq <- 10
+  p <- progressor(steps=(length(X)*(nsim+1) %/% freq))
   if (class(fit)[1] == 'minconfit') {
     rfit <- partial.r(fit)
     fitcluster <- fit$internal$model
@@ -84,12 +86,17 @@ multiGET.composite <- function(X, fit, stat, alpha=0.05, type='erl', nsim=NULL, 
     fits3 <- Map(kppm, X=sims3, cluster=fitcluster, statistic=fitstat)
     
     # 4. simulate composite curves
+    c <- 0
     if (!raw) {
       enve4 <- Map(function(ppp, fit) {
+        c <<- c + 1
+        if(c %% freq == 0) p()
         envelope(ppp, stat, nsim=nsim2, simulate=rfit(fit, nsim2, ppp), r=range$r, savefuns=T, verbose=F)
       }, ppp=sims3, fit=fits3)
     } else {
       enve4 <- Map(function(ppp, fit) {
+        c <<- c + 1
+        if(c %% freq == 0) p()
         obs <- stat(ppp)
         sims4 <- rfit(fit, nsim2, ppp)
         stats4 <- sapply(sims4, function(i) stat(i, r=range$r)[[valname]])
