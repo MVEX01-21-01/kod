@@ -2,7 +2,6 @@ library(spatstat)
 library(GET)
 library(gridExtra)
 library(future.apply)
-library(progressr)
 
 # Helper function for rule determining how to recalculate significance for
 # multiple testing. Currently, we use the Šidák correction, as suggested
@@ -53,8 +52,7 @@ multiGET.composite <- function(X, fit, stat, alpha=0.05, type='erl', nsim=NULL, 
     nsim2 <- nsim
   }
   
-  freq <- 10
-  p <- progressor(steps=(length(X)*(nsim+1) %/% freq))
+  message(paste('Preparing', length(X), 'envelopes, with N=', nsim))
   if (class(fit)[1] == 'minconfit') {
     rfit <- partial.r(fit)
     fitcluster <- fit$internal$model
@@ -68,6 +66,7 @@ multiGET.composite <- function(X, fit, stat, alpha=0.05, type='erl', nsim=NULL, 
   }
   
   future_lapply(X, function(ppp) {
+    tic <- proc.time()
     obs <- stat(ppp)
     range <- rrange(obs)
     # 1. estimates already obtained through fit
@@ -86,17 +85,12 @@ multiGET.composite <- function(X, fit, stat, alpha=0.05, type='erl', nsim=NULL, 
     fits3 <- Map(kppm, X=sims3, cluster=fitcluster, statistic=fitstat)
     
     # 4. simulate composite curves
-    c <- 0
     if (!raw) {
       enve4 <- Map(function(ppp, fit) {
-        c <<- c + 1
-        if(c %% freq == 0) p()
         envelope(ppp, stat, nsim=nsim2, simulate=rfit(fit, nsim2, ppp), r=range$r, savefuns=T, verbose=F)
       }, ppp=sims3, fit=fits3)
     } else {
       enve4 <- Map(function(ppp, fit) {
-        c <<- c + 1
-        if(c %% freq == 0) p()
         obs <- stat(ppp)
         sims4 <- rfit(fit, nsim2, ppp)
         stats4 <- sapply(sims4, function(i) stat(i, r=range$r)[[valname]])
@@ -106,7 +100,8 @@ multiGET.composite <- function(X, fit, stat, alpha=0.05, type='erl', nsim=NULL, 
     
     
     # 5-7. construct envelopes
-    p()
+    delta <- proc.time() - tic
+    message(paste('1 pattern in', delta[3] / 60, 'min'))
     GET.composite(X=enve2, X.ls=enve4, r_min=range$rmin, r_max=range$rmax, type=type, alpha=gamma)
   }, future.seed=T)
 }

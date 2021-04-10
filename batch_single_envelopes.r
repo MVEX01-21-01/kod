@@ -11,15 +11,17 @@ data <- loaddata()
 source('multiGET.r')
 
 plan(multicore)
-handlers(handler_progress(':spin [:bar] :percent (:current/:total) in :elapsed(:tick_rate) ETA :eta'))
-handlers(global=T)
+#handlers(handler_progress(':spin [:bar] :percent (:current/:total) in :elapsed(:tick_rate) ETA :eta'))
+#handlers(global=T)
 
 # Envelopes ----
 doenv <- function(ppp, cluster) {
   fit <- kppm(ppp, cluster=cluster)
   multiGET.composite(list(ppp), fit, Gest, alpha=0.05, type='erl', nsim=nsim)
 }
+message('Running Thomas...')
 envs.thomas   <- as.anylist(future_lapply(data$ppp, doenv, cluster='Thomas'))
+message('Running MatClust...')
 envs.matclust <- as.anylist(future_lapply(data$ppp, doenv, cluster='MatClust'))
 
 saveRDS(list(Thomas=envs.thomas, MatClust=envs.matclust), file=out)
