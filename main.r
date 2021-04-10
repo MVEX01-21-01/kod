@@ -154,7 +154,7 @@ ggsave('report_out/06_bar.box.pdf', plot=g, width=5.2, height=5.2)
 
 # Group envelopes ==========
 # Load pre-generated envelope, from batch_multi_envelopes.r
-envs.group <- loadenv('envs499_K_2.rds')
+envs.group <- loadenv('envs499_K_3.rds')
 g <- plot.envs.grouped(envs.group$Thomas, ncol=4)
 ggsave('report_out/07_envs.bar.thomas.pdf', plot=g, width=5.5, height=3)
 g <- plot.envs.grouped(envs.group$MatClust, ncol=4)
