@@ -15,7 +15,7 @@ msignf <- function(ntests, alpha=0.05) 1 - (1-alpha)^(1/ntests)
 match.r   <- function(fit) match.fun(paste('r', fit$internal$model, sep=''))
 partial.r <- function(fit) {
   fun <- match.r(fit)
-  function (fit, nsim, win) do.call(fun, as.list(c(fit$clustpar, fit$modelpar['mu'], nsim=nsim, win=list(win))))
+  function (fit, nsim, win) do.call(fun, as.list(c(fit$clustpar, fit$modelpar['mu'], nsim=nsim, win=list(as.owin(win)))))
 }
 # Helper function to extract statistic estimator from fit
 match.est <- function(fit) switch(fit$info$fname, 'K'=Kest, 'g'=pcf)
