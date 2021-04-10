@@ -33,7 +33,16 @@ unlist1 <- function(l) lapply(l, function(i) i[[1]])
 write.csvX <- function(...) write.csv(..., row.names=F, quote=F)
 
 # General pattern information
-write.csvX(data.frame(id=1:length(data$ppp), n=sapply(data$ppp, npoints), W=sapply(data$ppp, area)), 'report_out/info.csv')
+write.csvX(data.frame(
+  id=1:length(data$ppp),
+  group=data$g,
+  n=sapply(data$ppp, npoints),
+  xmin=sapply(data$ppp, function(X) X$window$xrange[1]),
+  xmax=sapply(data$ppp, function(X) X$window$xrange[2]),
+  ymin=sapply(data$ppp, function(X) X$window$yrange[1]),
+  ymax=sapply(data$ppp, function(X) X$window$yrange[2]),
+  absW=sapply(data$ppp, area)
+), 'report_out/info.csv')
 
 # CSR test on patterns ==========
 envs.csr <- csrenvs(data$ppp, nsim=999)

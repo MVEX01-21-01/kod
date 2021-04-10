@@ -43,5 +43,5 @@ repcluster_ <- function(hX, cluster, estfn, fitfn, startpars=NULL, lambda=NULL, 
 
 # Compute an alternative starting parameter set from branching obs
 startpars.branching <- function(dX, pX) {
-  c(kappa=intensitybar(pX), scale=2*mean(unlist(sapply(dX, nndist))))
+  c(kappa=intensitybar(pX), scale=2*mean(unlist(sapply(dX, nndist)))) #scale=.5*mean(unlist(sapply(pX, nndist)))) 
 }
