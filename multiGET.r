@@ -101,7 +101,7 @@ multiGET.composite <- function(X, fit, stat, alpha=0.05, type='erl', nsim=NULL, 
     
     # 5-7. construct envelopes
     delta <- proc.time() - tic
-    message(paste('1 pattern in', delta[3] / 60, 'min'))
+    message(paste('Done in', delta[3] / 60, 'min, at', Sys.time()))
     GET.composite(X=enve2, X.ls=enve4, r_min=range$rmin, r_max=range$rmax, type=type, alpha=gamma)
   }, future.seed=T)
 }
