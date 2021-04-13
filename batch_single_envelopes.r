@@ -1,7 +1,7 @@
 # This script runs A LOT of hypothesis tests in a non-interactive environment.
 # (Useful for batch use and multiprocessing.)
 args <- commandArgs(trailingOnly=TRUE)
-nsim <- strtoi(args[1])
+nsim <- 499 #strtoi(args[1])
 out <- paste('envelopes/envs', nsim, '_single.rds', sep='')
 
 # Initialize and fit models ----
@@ -11,7 +11,9 @@ data <- loaddata()
 source('multiGET.r')
 
 # This is important for reproducibility!
-set.seed(012101)
+# (this seed is different because 012101 produced the unlucky event of
+#  a subpattern with a single point, rendering K undefined)
+set.seed(0121010)
 
 plan(multicore)
 #handlers(handler_progress(':spin [:bar] :percent (:current/:total) in :elapsed(:tick_rate) ETA :eta'))
@@ -19,12 +21,13 @@ plan(multicore)
 
 # Envelopes ----
 doenv <- function(ppp, cluster) {
+  cat('  Fitting model\n')
   fit <- kppm(ppp, cluster=cluster)
   multiGET.composite(list(ppp), fit, Gest, alpha=0.05, type='erl', nsim=nsim)
 }
-message('Running Thomas...')
-envs.thomas   <- as.anylist(future_lapply(data$ppp, doenv, cluster='Thomas', future.seed=T))
-message('Running MatClust...')
-envs.matclust <- as.anylist(future_lapply(data$ppp, doenv, cluster='MatClust', future.seed=T))
+cat('Running Thomas...\n')
+envs.thomas   <- as.anylist(future_lapply(data$ppp, doenv, cluster='Thomas', future.seed=T, future.stdout=NA))
+cat('Running MatClust...\n')
+envs.matclust <- as.anylist(future_lapply(data$ppp, doenv, cluster='MatClust', future.seed=T, future.stdout=NA))
 
 saveRDS(list(Thomas=envs.thomas, MatClust=envs.matclust), file=out)

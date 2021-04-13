@@ -52,7 +52,7 @@ multiGET.composite <- function(X, fit, stat, alpha=0.05, type='erl', nsim=NULL, 
     nsim2 <- nsim
   }
   
-  message(paste('Preparing', length(X), 'envelopes, with N=', nsim))
+  cat(paste('  Preparing', length(X), 'envelopes, with N=', nsim, '\n'))
   if (class(fit)[1] == 'minconfit') {
     rfit <- partial.r(fit)
     fitcluster <- fit$internal$model
@@ -101,9 +101,9 @@ multiGET.composite <- function(X, fit, stat, alpha=0.05, type='erl', nsim=NULL, 
     
     # 5-7. construct envelopes
     delta <- proc.time() - tic
-    message(paste('Done in', delta[3] / 60, 'min, at', Sys.time()))
+    cat(paste(' Done in', delta[3] / 60, 'min, at', Sys.time(), '\n'))
     GET.composite(X=enve2, X.ls=enve4, r_min=range$rmin, r_max=range$rmax, type=type, alpha=gamma)
-  }, future.seed=T)
+  }, future.seed=T, future.stdout=NA)
 }
 
 # Retrieve the minimum p (closest to rejection) in each group
