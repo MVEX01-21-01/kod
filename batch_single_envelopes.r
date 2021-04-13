@@ -10,6 +10,9 @@ source('util.r')
 data <- loaddata()
 source('multiGET.r')
 
+# This is important for reproducibility!
+set.seed(012101)
+
 plan(multicore)
 #handlers(handler_progress(':spin [:bar] :percent (:current/:total) in :elapsed(:tick_rate) ETA :eta'))
 #handlers(global=T)
@@ -20,8 +23,8 @@ doenv <- function(ppp, cluster) {
   multiGET.composite(list(ppp), fit, Gest, alpha=0.05, type='erl', nsim=nsim)
 }
 message('Running Thomas...')
-envs.thomas   <- as.anylist(future_lapply(data$ppp, doenv, cluster='Thomas'))
+envs.thomas   <- as.anylist(future_lapply(data$ppp, doenv, cluster='Thomas', future.seed=T))
 message('Running MatClust...')
-envs.matclust <- as.anylist(future_lapply(data$ppp, doenv, cluster='MatClust'))
+envs.matclust <- as.anylist(future_lapply(data$ppp, doenv, cluster='MatClust', future.seed=T))
 
 saveRDS(list(Thomas=envs.thomas, MatClust=envs.matclust), file=out)

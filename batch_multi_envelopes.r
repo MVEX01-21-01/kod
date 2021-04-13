@@ -16,6 +16,10 @@ fit.matclust <- repcluster.estK(data, 'MatClust')
 #fit.matclust <- repcluster.estpcf(data, 'MatClust')
 source('multiGET.r')
 
+
+# This is important for reproducibility!
+set.seed(012101)
+
 plan(multicore)
 #handlers(handler_progress(':spin [:bar] :percent (:current/:total) in :elapsed(:tick_rate) ETA :eta'))
 #handlers(global=T)
