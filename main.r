@@ -87,7 +87,7 @@ ggsave('report_out/02_ind.box.pdf', plot=g.indparams, width=5.2, height=5.2)
 # Individual envelopes ==========
 # Load pre-generated envelope, from batch_single_envelopes.r
 # TODO fix data format?
-envs.ind <- loadenv('envs199_single.rds')
+envs.ind <- loadenv('envs499_single_REPR.rds')
 g <- plot.envs.single(unlist1(envs.ind$Thomas), ncol=8)
 ggsave('report_out/03_envs.ind.Thomas.pdf', plot=g, width=5.5, height=3)
 g <- plot.envs.single(unlist1(envs.ind$MatClust), ncol=8)
@@ -154,11 +154,13 @@ ggsave('report_out/06_bar.box.pdf', plot=g, width=5.2, height=5.2)
 
 # Group envelopes ==========
 # Load pre-generated envelope, from batch_multi_envelopes.r
-envs.group <- loadenv('envs499_K_3.rds')
+envs.group <- loadenv('envs499_K_REPR.rds')
 g <- plot.envs.grouped(envs.group$Thomas, ncol=4)
 ggsave('report_out/07_envs.bar.thomas.pdf', plot=g, width=5.5, height=3)
+print(sapply(envs.group$Thomas, minp))
 g <- plot.envs.grouped(envs.group$MatClust, ncol=4)
 ggsave('report_out/08_envs.bar.matclust.pdf', plot=g, width=5.5, height=3)
+print(sapply(envs.group$MatClust, minp))
 
 # 3.6 - Branching points analysis ==========
 # A nice plot of all patterns

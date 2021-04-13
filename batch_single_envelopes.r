@@ -13,7 +13,7 @@ source('multiGET.r')
 # This is important for reproducibility!
 # (this seed is different because 012101 produced the unlucky event of
 #  a subpattern with a single point, rendering K undefined)
-set.seed(0121010)
+set.seed(101210)
 
 plan(multicore)
 #handlers(handler_progress(':spin [:bar] :percent (:current/:total) in :elapsed(:tick_rate) ETA :eta'))
