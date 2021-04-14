@@ -21,6 +21,22 @@ match.est <- function(fit) switch(fit$info$fname, 'K'=Kest, 'g'=pcf)
 # Helper function to simulate a fit
 rFit <- function(fit, nsim, win) partial.r(fit)(fit, nsim, win)
 
+# Helper wrapper function to reject bad patterns for K function
+reject.bad <- function(rfit) {
+  function(fit, nsim, ppp) {
+    Y <- rfit(fit, nsim, ppp)
+    # reject too few points...
+    rejects <- sapply(Y, npoints) <= 1
+    if (any(rejects)) cat(paste('  Rejected', length(which(rejects)), 'pattern(s), replacing...\n'))
+    while(any(rejects)) {
+      i <- which.max(rejects)
+      Y[[i]] <- rfit(fit, 1, ppp)[[1]]
+      rejects[[i]] <- npoints(Y[[i]]) <= 1
+    }
+    Y
+  }
+}
+
 # Helper function to obtain range from statistic
 rrange <- function(obs) {
   argname <- fvnames(obs, '.x')
@@ -52,12 +68,13 @@ multiGET.composite <- function(X, fit, stat, alpha=0.05, type='erl', nsim=NULL, 
     nsim2 <- nsim
   }
   
-  cat(paste('  Preparing', length(X), 'envelopes, with N=', nsim, '\n'))
+  cat(paste(' Preparing', length(X), 'envelopes, with N=', nsim, '\n'))
   if (class(fit)[1] == 'minconfit') {
     rfit <- partial.r(fit)
     fitcluster <- fit$internal$model
     fitstat <- fit$info$fname
   } else if (class(fit)[1] == 'kppm') {
+    # TODO reject.bad?
     rfit <- function(fit, nsim, ppp) simulate.kppm(fit, nsim=nsim, window=as.owin(ppp), verbose=F)
     fitcluster <- fit$clusters
     fitstat <- fit$Fit$statistic
@@ -101,7 +118,7 @@ multiGET.composite <- function(X, fit, stat, alpha=0.05, type='erl', nsim=NULL, 
     
     # 5-7. construct envelopes
     delta <- proc.time() - tic
-    cat(paste(' Done in', delta[3] / 60, 'min, at', Sys.time(), '\n'))
+    cat(paste('  Done in', delta[3] / 60, 'min, at', Sys.time(), '\n'))
     GET.composite(X=enve2, X.ls=enve4, r_min=range$rmin, r_max=range$rmax, type=type, alpha=gamma)
   }, future.seed=T, future.stdout=NA)
 }

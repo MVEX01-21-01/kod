@@ -1,7 +1,7 @@
 # This script runs A LOT of hypothesis tests in a non-interactive environment.
 # (Useful for batch use and multiprocessing.)
 args <- commandArgs(trailingOnly=TRUE)
-nsim <- 499 #strtoi(args[1])
+nsim <- strtoi(args[1])
 out <- paste('envelopes/envs', nsim, '_single.rds', sep='')
 
 # Initialize and fit models ----
@@ -11,9 +11,7 @@ data <- loaddata()
 source('multiGET.r')
 
 # This is important for reproducibility!
-# (this seed is different because 012101 produced the unlucky event of
-#  a subpattern with a single point, rendering K undefined)
-set.seed(101210)
+set.seed(012101)
 
 plan(multicore)
 #handlers(handler_progress(':spin [:bar] :percent (:current/:total) in :elapsed(:tick_rate) ETA :eta'))
