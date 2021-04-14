@@ -1,0 +1,15 @@
+Modellutvärdering av Thomas- och
+Matérnklusterprocesserna för nervmönster i
+neuropati
+MVEX01-21-01
+
+-----------------------
+
+Börja förslagsvis i main.r, där koden som genererar figurer till rapporten
+återfinns. De genererade figurerna samlas i report_out/.
+
+För att köra de långsamma anpassningstesterna, använd batch.sh.
+Resultaten är samlade i envelopes/.
+
+Rådatan finns under DATA_ENFS/.
+

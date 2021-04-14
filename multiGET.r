@@ -99,7 +99,7 @@ multiGET.composite <- function(X, fit, stat, alpha=0.05, type='erl', nsim=NULL, 
     
     # 3. simulate and estimate null replicate parameters
     sims3 <- rfit(fit, nsim, ppp)
-    fits3 <- Map(kppm, X=sims3, cluster=fitcluster, statistic=fitstat)
+    fits3 <- Map(kppm, X=sims3, cluster=fitcluster, statistic=fitstat, action.bad.values='warn')
     
     # 4. simulate composite curves
     if (!raw) {

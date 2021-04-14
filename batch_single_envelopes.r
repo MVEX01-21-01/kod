@@ -13,6 +13,10 @@ source('multiGET.r')
 # This is important for reproducibility!
 set.seed(012101)
 
+# Problems with very low point counts leading to broken estimates.
+# Behaviour changed in spatstat 2 experimentally:
+spatstat.options(kppm.strict=F)
+
 plan(multicore)
 #handlers(handler_progress(':spin [:bar] :percent (:current/:total) in :elapsed(:tick_rate) ETA :eta'))
 #handlers(global=T)
