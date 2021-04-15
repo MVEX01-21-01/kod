@@ -1,24 +1,38 @@
 # Data loading
-loaddata <- function() {
+loaddata <- function(tree=F) {
   data_moderate <- readRDS('DATA_ENFS/CALF_MODERATE')
   data_normal   <- readRDS('DATA_ENFS/CALF_NORMAL')
-  hyperframe(
+  h <- hyperframe(
     g = factor(rep.int(c('MODERATE', 'NORMAL'), c(length(data_moderate), length(data_normal)))),
     ppp = anylapply(c(data_moderate, data_normal),addunit)
   )
+  if (tree) {
+    data_moderate_df <- readRDS('DATA_ENFS/CALF_MODERATE_df')
+    data_normal_df <- readRDS('DATA_ENFS/CALF_NORMALS_df')
+    h$ppp <- Map(augmentTree, ppp=h$ppp, ext=c(data_moderate_df,data_normal_df))
+  }
+  h
 }
-loaddata.branching <- function() {
+loaddata.branching <- function(tree=F) {
   data_moderate <- readRDS('DATA_ENFS/CALF_MODERATE_BRANCHING')
   data_normal   <- readRDS('DATA_ENFS/CALF_NORMAL_BRANCHING')
-  hyperframe(
+  h <- hyperframe(
     g = factor(rep.int(c('MODERATE', 'NORMAL'), c(length(data_moderate), length(data_normal)))),
     ppp = anylapply(c(data_moderate, data_normal),addunit)
   )
+  if (tree) {
+    data_moderate_df <- readRDS('DATA_ENFS/CALF_MODERATE_BRANCHING_df')
+    data_normal_df <- readRDS('DATA_ENFS/CALF_NORMALS_BRANCH_df')
+    h$ppp <- Map(augmentTree, ppp=h$ppp, ext=c(data_moderate_df,data_normal_df))
+  }
+  h
 }
 loadenv <- function(env) readRDS(paste('envelopes/', env, sep=''))
 
 # Helper function rescaling to proper unit
 addunit <- function(ppp) rescale(ppp,1,'µm')
+# Helper function to augment ppps with Tree tags
+augmentTree <- function(ppp, ext) setmarks(ppp, ext$Tree)
 
 # Helper function splitting over groups.
 # This enables us to write functions in terms of a single set of patterns,
