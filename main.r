@@ -80,6 +80,7 @@ longparams <- function(pars, model, group, area=NULL) {
 areas <- sapply(data$ppp, area)
 data.params <- rbind(longparams(fit.each.thomas, 'Thomas', data$g, area=areas),
                      longparams(fit.each.matclust, 'MatClust', data$g, area=areas))
+data.params$param <- factor(data.params$param, levels=c('kappa*area', 'mu', 'scale'), labels=c('κ|W|', 'μ', 'τ'))
 g.indparams <- ggplot(data.params, aes(group, value)) +
   geom_boxplot() + facet_wrap(~ model + param, scales='free')
 ggsave('report_out/02_ind.box.pdf', plot=g.indparams, width=5.2, height=5.2)
@@ -147,6 +148,8 @@ df.true <- data.frame(
     c(intensitybar(X,coeff=sapply(X, area)), intensitybar(dX,coeff=1/ib))
   }, data.branching, dX=split(data$ppp, data$g))),length.out=8)
 )
+df.fit$param <- factor(df.fit$param, levels=c('kappa*area', 'mu', 'scale'), labels=c('κ|W|', 'μ', 'τ'))
+df.true$param <- factor(df.true$param, levels=c('kappa*area', 'mu', 'scale'), labels=c('κ|W|', 'μ', 'τ'))
 g <- g.indparams +
   geom_point(data=df.fit, shape=3, color='red') +
   geom_point(data=df.true, shape=4, color='blue')

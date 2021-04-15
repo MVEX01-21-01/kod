@@ -21,17 +21,19 @@ match.est <- function(fit) switch(fit$info$fname, 'K'=Kest, 'g'=pcf)
 # Helper function to simulate a fit
 rFit <- function(fit, nsim, win) partial.r(fit)(fit, nsim, win)
 
-# Helper wrapper function to reject bad patterns for K function
-reject.bad <- function(rfit) {
+# Helper wrapper function to reject/warn bad patterns for K function
+reject.bad <- function(rfit, l=1, replace=F) {
   function(fit, nsim, ppp) {
     Y <- rfit(fit, nsim, ppp)
     # reject too few points...
-    rejects <- sapply(Y, npoints) <= 1
-    if (any(rejects)) cat(paste('  Rejected', length(which(rejects)), 'pattern(s), replacing...\n'))
-    while(any(rejects)) {
-      i <- which.max(rejects)
-      Y[[i]] <- rfit(fit, 1, ppp)[[1]]
-      rejects[[i]] <- npoints(Y[[i]]) <= 1
+    rejects <- sapply(Y, npoints) <= l
+    if (any(rejects)) cat(paste('  Warning:', length(which(rejects)), 'pattern(s) with n <=', l, '\n'))
+    if (replace) {
+      while(any(rejects)) {
+        i <- which.max(rejects)
+        Y[[i]] <- rfit(fit, 1, ppp)[[1]]
+        rejects[[i]] <- npoints(Y[[i]]) <= l
+      }
     }
     Y
   }
@@ -74,7 +76,7 @@ multiGET.composite <- function(X, fit, stat, alpha=0.05, type='erl', nsim=NULL, 
     fitcluster <- fit$internal$model
     fitstat <- fit$info$fname
   } else if (class(fit)[1] == 'kppm') {
-    # TODO reject.bad?
+    # TODO use reject.bad?
     rfit <- function(fit, nsim, ppp) simulate.kppm(fit, nsim=nsim, window=as.owin(ppp), verbose=F)
     fitcluster <- fit$clusters
     fitstat <- fit$Fit$statistic
@@ -99,7 +101,15 @@ multiGET.composite <- function(X, fit, stat, alpha=0.05, type='erl', nsim=NULL, 
     
     # 3. simulate and estimate null replicate parameters
     sims3 <- rfit(fit, nsim, ppp)
-    fits3 <- Map(kppm, X=sims3, cluster=fitcluster, statistic=fitstat, action.bad.values='warn')
+    fits3 <- Map(function(i) {
+      # here bad patterns crash. replace those!
+      repeat {
+        nfit <- try(kppm(sims3[[i]], cluster=fitcluster, statistic=fitstat, action.bad.values='warn'))
+        if (class(nfit) != 'try-error') return(nfit)
+        cat(paste('  ...retrying', i, '(n=', npoints(sims3[[i]]), ')\n'))
+        sims3[[i]] <- rfit(fit, 1, ppp)[[1]] # replace...
+      }
+    }, i=1:length(sims3))
     
     # 4. simulate composite curves
     if (!raw) {
