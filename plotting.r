@@ -97,9 +97,9 @@ pppplot <- function(ppp, parent=NULL, tag=NULL) {
   }
   xlim <- ppp$window$xrange
   ylim <- ppp$window$yrange
-  ggplot() + geom_point(aes(x=ppp$x, y=ppp$y), shape=1) +
-    geom_point(aes(x=parent$x, y=parent$y), size=3, shape=4) +
+  ggplot() + geom_point(aes(x=ppp$x, y=ppp$y, color=factor(ppp$marks)), shape=1) +
+    geom_point(aes(x=parent$x, y=parent$y, color=factor(parent$marks)), size=3, shape=4) +
     labs(title=NULL, tag=tag, x=NULL, y=NULL) + coord_fixed(xlim=xlim, ylim=ylim, expand=F, clip='off') +
     theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank(),
-          panel.border = element_rect(color='gray', fill=NA, size=0.5), plot.tag=theme_get()$axis.text)
+          panel.border = element_rect(color='gray', fill=NA, size=0.5), plot.tag=theme_get()$axis.text, legend.position='none')
 }
