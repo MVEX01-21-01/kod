@@ -19,7 +19,7 @@ source('util.r')
 source('repcluster.r')
 source('multiGET.r')
 source('plotting.r')
-data <- loaddata()
+data <- loaddata.full()
 data.branching <- loaddata.branching()
 
 # Clean output directory
@@ -167,7 +167,7 @@ print(sapply(envs.group$MatClust, minp))
 
 # 3.6 - Branching points analysis ==========
 # A nice plot of all patterns
-g <- grid.arrange(grobs=Map(pppplot, data$ppp, data.branching$ppp, names(data$ppp)))
+g <- grid.arrange(grobs=Map(pppplot, data$ppp, names(data$ppp)))
 ggsave('report_out/09_patterns.branch.pdf', plot=g, width=5.5, height=5)
 
 # Under the model hypotheses, the parent points (which we take to be the
