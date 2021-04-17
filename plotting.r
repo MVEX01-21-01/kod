@@ -88,21 +88,24 @@ plot.envs.grouped <- function(groups, noaxes=T, ...) {
 }
 
 # Point patterns ====
-pppplot <- function(ppp, parent=NULL, tag=NULL) {
-  if (is.null(parent)) {
-    parent <- list(x=numeric(0),y=numeric(0),marks=factor(NULL))
+pppplot <- function(X, tag=NULL, tree=F) {
+  Xm <- NULL
+  Pm <- NULL
+  if (!is.null(attr(X, 'parents'))) {
+    P <- attr(X, 'parents')
+    if (tree) {
+      Xm <- factor(attr(X, 'parentid'))
+      Pm <- factor(1:npoints(P))
+    }
+  } else {
+    P <- list(x=numeric(0),y=numeric(0))
   }
-  if (!is.null(ppp$marks)) {
-    ppp$marks <- factor(ppp$marks)
-    parent$marks <- factor(parent$marks)
-  }
-  if (!is.null(tag)) {
-    tag <- paste0('#',tag)
-  }
-  xlim <- ppp$window$xrange
-  ylim <- ppp$window$yrange
-  ggplot() + geom_point(aes(x=ppp$x, y=ppp$y, color=ppp$marks), shape=1) +
-    geom_point(aes(x=parent$x, y=parent$y, color=parent$marks), size=3, shape=4) +
+  if (!is.null(tag)) tag <- paste0('#',tag)
+
+  xlim <- X$window$xrange
+  ylim <- X$window$yrange
+  ggplot() + geom_point(aes(x=X$x, y=X$y, color=Xm), shape=1) +
+    geom_point(aes(x=P$x, y=P$y, color=Pm), size=3, shape=4) +
     labs(title=NULL, tag=tag, x=NULL, y=NULL) + coord_fixed(xlim=xlim, ylim=ylim, expand=F, clip='off') +
     theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank(),
           panel.border = element_rect(color='gray', fill=NA, size=0.5), plot.tag=theme_get()$axis.text, legend.position='none')

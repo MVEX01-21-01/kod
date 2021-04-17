@@ -1,38 +1,58 @@
 # Data loading
-loaddata <- function(tree=F) {
+loaddata <- function() {
   data_moderate <- readRDS('DATA_ENFS/CALF_MODERATE')
   data_normal   <- readRDS('DATA_ENFS/CALF_NORMAL')
-  h <- hyperframe(
-    g = factor(rep.int(c('MODERATE', 'NORMAL'), c(length(data_moderate), length(data_normal)))),
-    ppp = anylapply(c(data_moderate, data_normal),addunit)
-  )
-  if (tree) {
-    data_moderate_df <- readRDS('DATA_ENFS/CALF_MODERATE_df')
-    data_normal_df <- readRDS('DATA_ENFS/CALF_NORMALS_df')
-    h$ppp <- Map(augmentTree, ppp=h$ppp, ext=c(data_moderate_df,data_normal_df))
-  }
-  h
+  finishdata(data_moderate, data_normal)
 }
-loaddata.branching <- function(tree=F) {
+loaddata.branching <- function() {
   data_moderate <- readRDS('DATA_ENFS/CALF_MODERATE_BRANCHING')
   data_normal   <- readRDS('DATA_ENFS/CALF_NORMAL_BRANCHING')
-  h <- hyperframe(
-    g = factor(rep.int(c('MODERATE', 'NORMAL'), c(length(data_moderate), length(data_normal)))),
-    ppp = anylapply(c(data_moderate, data_normal),addunit)
+  finishdata(data_moderate, data_normal)
+}
+finishdata <- function(mod, nor) {
+  hyperframe(
+    g = factor(rep.int(c('MODERATE', 'NORMAL'), c(length(mod), length(nor)))),
+    ppp = anylapply(c(mod, nor),addunit)
   )
-  if (tree) {
-    data_moderate_df <- readRDS('DATA_ENFS/CALF_MODERATE_BRANCHING_df')
-    data_normal_df <- readRDS('DATA_ENFS/CALF_NORMALS_BRANCH_df')
-    h$ppp <- Map(augmentTree, ppp=h$ppp, ext=c(data_moderate_df,data_normal_df))
-  }
-  h
+}
+loaddata.full <- function() {
+  Xs <- loaddata()
+  Ps <- loaddata.branching()
+  moderate_df <- readRDS('DATA_ENFS/CALF_MODERATE_df')
+  normal_df <- readRDS('DATA_ENFS/CALF_NORMALS_df')
+  moderate_b_df <- readRDS('DATA_ENFS/CALF_MODERATE_BRANCHING_df')
+  normal_b_df <- readRDS('DATA_ENFS/CALF_NORMALS_BRANCH_df')
+  Xt <- lapply(c(moderate_df, normal_df), function(df) df$Tree)
+  Pt <- lapply(c(moderate_b_df, normal_b_df), function(df) df$Tree)
+  
+  # TODO: why arent the branching points complete data-wise?
+  # We will have to use the parent patterns, but renumber the trees
+  # so the parentids are correct.
+  # Number the parent trees according to index, and roll over
+  # the unknown trees to higher numbers
+  Ys <- anylapply(1:length(Xs$ppp), function(i) {
+    xtrees <- Xt[[i]]
+    ptrees <- Pt[[i]]  # parent trees
+    utrees <- setdiff(xtrees, ptrees)  # unknown trees
+    
+    remap <- sapply(1:max(xtrees, ptrees), function(i) {
+      v <- match(i, ptrees)
+      if (is.na(v)) v <- match(i, utrees) + length(ptrees)
+      v
+    })
+    
+    X <- Xs$ppp[[i]]
+    attr(X, 'parents') <- Ps$ppp[[i]]
+    attr(X, 'parentid') <- sapply(xtrees, function(t) remap[t])
+    X
+  })
+  
+  hyperframe(g = Xs$g, ppp = Ys)
 }
 loadenv <- function(env) readRDS(paste('envelopes/', env, sep=''))
 
 # Helper function rescaling to proper unit
 addunit <- function(ppp) rescale(ppp,1,'µm')
-# Helper function to augment ppps with Tree tags
-augmentTree <- function(ppp, ext) setmarks(ppp, ext$Tree)
 
 # Helper function splitting over groups.
 # This enables us to write functions in terms of a single set of patterns,
