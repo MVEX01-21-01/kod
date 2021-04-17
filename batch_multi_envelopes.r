@@ -25,9 +25,9 @@ plan(multicore)
 #handlers(global=T)
 
 # Envelopes ----
-message('Running Thomas...')
-envs.thomas   <- grouped(multiGET.composite, data, fit.thomas, c(Gest), alpha=0.05, type='erl', nsim=nsim)
 message('Running MatClust...')
 envs.matclust <- grouped(multiGET.composite, data, fit.matclust, c(Gest), alpha=0.05, type='erl', nsim=nsim)
+message('Running Thomas...')
+envs.thomas   <- grouped(multiGET.composite, data, fit.thomas, c(Gest), alpha=0.05, type='erl', nsim=nsim)
 
 saveRDS(list(Thomas=envs.thomas, MatClust=envs.matclust), file=out)

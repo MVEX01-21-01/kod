@@ -27,9 +27,9 @@ doenv <- function(ppp, cluster) {
   fit <- kppm(ppp, cluster=cluster)
   multiGET.composite(list(ppp), fit, Gest, alpha=0.05, type='erl', nsim=nsim)
 }
-cat('Running Thomas...\n')
-envs.thomas   <- as.anylist(future_lapply(data$ppp, doenv, cluster='Thomas', future.seed=T, future.stdout=NA))
 cat('Running MatClust...\n')
 envs.matclust <- as.anylist(future_lapply(data$ppp, doenv, cluster='MatClust', future.seed=T, future.stdout=NA))
+cat('Running Thomas...\n')
+envs.thomas   <- as.anylist(future_lapply(data$ppp, doenv, cluster='Thomas', future.seed=T, future.stdout=NA))
 
 saveRDS(list(Thomas=envs.thomas, MatClust=envs.matclust), file=out)
