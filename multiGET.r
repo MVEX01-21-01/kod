@@ -9,6 +9,7 @@ library(future.apply)
 # Remember that conservatism contrary to what one might expect is unsafe, as we
 # are looking to NOT reject the null hypothesis...
 msignf <- function(ntests, alpha=0.05) 1 - (1-alpha)^(1/ntests)
+msigninv <- function(ntests, p) 1 - (1-p)^ntests
 
 # Helper functions to extract simulator from fit
 match.r   <- function(fit) match.fun(paste('r', fit$internal$model, sep=''))

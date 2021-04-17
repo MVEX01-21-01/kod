@@ -12,6 +12,7 @@ if (!dir.exists('DATA_ENFS')) {
 set.seed(012101)
 
 library(ggplot2)
+library(Cairo)
 theme_set(theme_minimal())
 library(spatstat)
 
@@ -83,7 +84,7 @@ data.params <- rbind(longparams(fit.each.thomas, 'Thomas', data$g, area=areas),
 data.params$param <- factor(data.params$param, levels=c('kappa*area', 'mu', 'scale'), labels=c('κ|W|', 'μ', 'τ'))
 g.indparams <- ggplot(data.params, aes(group, value)) +
   geom_boxplot() + facet_wrap(~ model + param, scales='free')
-ggsave('report_out/02_ind.box.pdf', plot=g.indparams, width=5.2, height=5.2)
+ggsave('report_out/02_ind.box.pdf', plot=g.indparams, width=5.2, height=5.2, device=cairo_pdf)
 
 # Individual envelopes ==========
 # Load pre-generated envelope, from batch_single_envelopes.r
@@ -153,17 +154,17 @@ df.true$param <- factor(df.true$param, levels=c('kappa*area', 'mu', 'scale'), la
 g <- g.indparams +
   geom_point(data=df.fit, shape=3, color='red') +
   geom_point(data=df.true, shape=4, color='blue')
-ggsave('report_out/06_bar.box.pdf', plot=g, width=5.2, height=5.2)
+ggsave('report_out/06_bar.box.pdf', plot=g, width=5.2, height=5.2, device=cairo_pdf)
 
 # Group envelopes ==========
 # Load pre-generated envelope, from batch_multi_envelopes.r
 envs.group <- loadenv('envs499_K_REPR2.rds')
 g <- plot.envs.grouped(envs.group$Thomas, ncol=4)
 ggsave('report_out/07_envs.bar.thomas.pdf', plot=g, width=5.5, height=3)
-print(sapply(envs.group$Thomas, minp))
+print(sapply(envs.group$Thomas, function(X) msigninv(length(X),minp(X))))
 g <- plot.envs.grouped(envs.group$MatClust, ncol=4)
 ggsave('report_out/08_envs.bar.matclust.pdf', plot=g, width=5.5, height=3)
-print(sapply(envs.group$MatClust, minp))
+print(sapply(envs.group$MatClust, function(X) msigninv(length(X),minp(X))))
 
 # 3.6 - Branching points analysis ==========
 # A nice plot of all patterns
