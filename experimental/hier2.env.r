@@ -1,5 +1,7 @@
 source('experimental/agnenv.r')
 source('experimental/hier2.R')
+source('util.r')
+source('plotting.r')
 
 # The new loaddata.full() augments with tree data internally.
 data <- loaddata.full()
@@ -39,4 +41,6 @@ simfun <- function(fit, nsim, ppp) {
 envs.ind.hier2.thomas <- anylapply(data$ppp, function(X) {
   agnenv.composite(list(X), Lest, fitfun, simfun, nsim=199)
 })
-plot.envs.single(envs.ind.hier2.thomas)
+
+plan(multicore)
+saveRDS(envs.ind.hier2.thomas, out='hier2env.rds')

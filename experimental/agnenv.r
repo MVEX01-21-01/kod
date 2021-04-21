@@ -66,8 +66,11 @@ agnenv.composite <- function(X, statfun, fitfun, simfun, fit=NULL, alpha=0.05, t
     # 5-7. construct envelopes
     delta <- proc.time() - tic
     cat(paste('  Done in', delta[3] / 60, 'min, at', Sys.time(), '\n'))
-    print(curvesfinite(enve2))
-    print(sapply(enve4, curvesfinite))
+    enve4.finite <- sapply(enve4, curvesfinite)
+    if (!all(enve4.finite)) {
+      cat('   envelope problems...')
+      return(enve4[!enve4.finite])
+    }
     GET.composite(X=enve2, X.ls=enve4, r_min=range$rmin, r_max=range$rmax, type=type, alpha=gamma)
   }, future.seed=T, future.stdout=NA)
 }
