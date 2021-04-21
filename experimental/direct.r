@@ -128,7 +128,7 @@ echenv <- function(ppp, stat, nsim, alpha, type='erl') {
     
     # 4. simulate composite curves
     enve4 <- Map(function(ppp, fit) {
-      e <- envelope(ppp, stat, nsim=nsim2, simulate=rfit(fit, nsim2, ppp), r=range$r, savefuns=T, verbose=F)
+      envelope(ppp, stat, nsim=nsim2, simulate=rfit(fit, nsim2, ppp), r=range$r, savefuns=T, verbose=F)
     }, ppp=sims3, fit=fits3)
     
     # 5-7. construct envelopes
