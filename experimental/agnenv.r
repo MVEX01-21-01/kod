@@ -54,23 +54,18 @@ agnenv.composite <- function(X, statfun, fitfun, simfun, fit=NULL, alpha=0.05, t
         nfit <- try(fitfun(sims3[[i]]))
         if (class(nfit) != 'try-error') return(nfit)
         cat(paste('  ...retrying', i, '(n=', npoints(sims3[[i]]), ')\n'))
-        sims3[[i]] <- rfit(fit, 1, ppp)[[1]] # replace...
+        sims3[[i]] <- simfun(fit, 1, ppp)[[1]] # replace...
       }
     }, i=1:length(sims3))
   
     # 4. simulate composite curves
     enve4 <- Map(function(ppp, fit) {
-      envelope(ppp, statfun, nsim=nsim2, simulate=simfun(fit, nsim2, ppp), r=range$r, savefuns=T, verbose=F)
+      envelope(ppp, statfun, nsim=nsim2, simulate=function(ppp) simfun(fit, 1, ppp), r=range$r, savefuns=T, rejectNA=T, verbose=F)
     }, ppp=sims3, fit=fits3)
   
     # 5-7. construct envelopes
     delta <- proc.time() - tic
     cat(paste('  Done in', delta[3] / 60, 'min, at', Sys.time(), '\n'))
-    enve4.finite <- sapply(enve4, curvesfinite)
-    if (!all(enve4.finite)) {
-      cat('   envelope problems...')
-      return(enve4[!enve4.finite])
-    }
     GET.composite(X=enve2, X.ls=enve4, r_min=range$rmin, r_max=range$rmax, type=type, alpha=gamma)
   }, future.seed=T, future.stdout=NA)
 }
