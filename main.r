@@ -25,9 +25,6 @@ data.branching <- loaddata.branching()
 unlink('report_out', recursive=T)
 dir.create('report_out')
 
-# Helper to unnest single envelopes
-unlist1 <- function(l) lapply(l, function(i) i[[1]])
-
 # Helper to write csvsimple-safe csv
 write.csvX <- function(...) write.csv(..., row.names=F, quote=F)
 

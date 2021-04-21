@@ -66,3 +66,6 @@ grouped <- function(f, data, ..., SIMPLIFY=F) {
 params.each <- function(X, cluster) {
   sapply(Map(kppm, X=X, cluster=cluster), function(fit) c(fit$clustpar, mu=fit$mu))
 }
+
+# Helper to unnest single envelopes
+unlist1 <- function(l) lapply(l, function(i) i[[1]])
