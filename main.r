@@ -7,9 +7,7 @@ if (!dir.exists('DATA_ENFS')) {
   stop('Can\'t find pattern subdir DATA_ENFS. Check your working directory.')
 }
 
-# This is important for reproducibility!
-# But note that the pre-stored envelopes also have to be reproducibly generated.
-set.seed(012101)
+# All simulations are run in advance and stored.
 
 library(ggplot2)
 library(Cairo)
@@ -46,7 +44,7 @@ write.csvX(data.frame(
 ), 'report_out/info.csv')
 
 # CSR test on patterns ==========
-envs.csr <- csrenvs(data$ppp, nsim=999)
+envs.csr <- loadenv('csrenv_endpoints.rds')
 g <- plot.envs.single(envs.csr, ncol=8)
 ggsave('report_out/01_csr.pdf', plot=g, width=5.5, height=3)
 
@@ -173,7 +171,7 @@ ggsave('report_out/09_patterns.branch.pdf', plot=g, width=5.5, height=5)
 
 # Under the model hypotheses, the parent points (which we take to be the
 # branching points in this case) should be CSR
-envs.csr.branching <- grouped(csrenvs, data.branching, nsim=999)
+envs.csr.branching <- loadenv('csrenv_branching.rds')
 g <- plot.envs.grouped(envs.csr.branching, ncol=4)
 ggsave('report_out/10_csr.branching.pdf', plot=g, width=5.5, height=3)
 
