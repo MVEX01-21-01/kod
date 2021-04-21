@@ -38,9 +38,9 @@ simfun <- function(fit, nsim, ppp) {
 }
 
 # Run some envelopes ====
-envs.ind.hier2.thomas <- anylapply(data$ppp, function(X) {
-  agnenv.composite(list(X), Lest, fitfun, simfun, nsim=199)
-})
-
 plan(multicore)
-saveRDS(envs.ind.hier2.thomas, out='hier2env.rds')
+envs.ind.hier2.thomas <- future_lapply(data$ppp, function(X) {
+  agnenv.composite(list(X), Lest, fitfun, simfun, nsim=199)
+}, future.seed=T, future.stdout=NA)
+
+saveRDS(envs.ind.hier2.thomas, 'envelopes/hier2env.rds')
