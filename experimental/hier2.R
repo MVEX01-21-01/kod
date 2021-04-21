@@ -84,12 +84,13 @@ sim.mat.parents <- function(mu, scale, parents, nsim, window) {
 sim.thom.parents <- function(mu, scale, parents, nsim, window) {
   npar <- dim(parents)[1]
   res <- list()
+  sigma <- scale / sqrt(2)
   for (j in 1:npar) {
     parent <- parents[j, , drop=F]
     n <- rpois(nsim, mu)
     centre = c(parent$X, parent$Y)
     disc <- lapply(n, function(x) {
-      d <- gausdisc(n=x, sigma=scale, centre=centre)
+      d <- gausdisc(n=x, sigma=sigma, centre=centre)
       ppp(d[, 1], d[, 2], window=window)
       })
     res[[j]] <- disc
