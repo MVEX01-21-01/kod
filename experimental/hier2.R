@@ -81,23 +81,37 @@ sim.mat.parents <- function(mu, scale, parents, nsim, window) {
 }
 
 sim.thom.parents <- function(mu, scale, parents, nsim, window) {
-  npar <- dim(parents)[1]
+  if (class(parents) == 'ppp') {
+    npar <- parents$n
+    parlist <- data.frame(X=parents$x, Y=parents$y, Tree=1:length(parents$x))
+  } else {
+    npar <- dim(parents)[1]
+    parlist <- parents
+  }
+  if (is.null(npar)) {
+    stop('Invalid parents')
+  }
   res <- list()
   sigma <- scale / sqrt(2)
   for (j in 1:npar) {
-    parent <- parents[j, , drop=F]
+    parent <- parlist[j, , drop=F]
     n <- rpois(nsim, mu)
     centre = c(parent$X, parent$Y)
     disc <- lapply(n, function(x) {
       d <- gausdisc(n=x, sigma=sigma, centre=centre)
-      ppp(d[, 1], d[, 2], window=window)
+      ppp <- ppp(d[, 1], d[, 2], window=window)
+      attr(ppp, 'parentid') <- rep(parent$Tree, ppp$n)
+      ppp
       })
     res[[j]] <- disc
   }
-  superimposed.res <- list()
+  superimposed.res <- solist()
   for (i in 1:nsim) {
     dd <- solapply(1:npar, function(k) {res[[k]][[i]]})
+    pid <- unlist(lapply(1:npar, function(i) {attr(dd[[i]], 'parentid')}))
     superimposed.res[[i]] <- superimpose(dd, W=window)
+    attr(superimposed.res[[i]], 'parents') <- parents
+    attr(superimposed.res[[i]], 'parentid') <- pid
   }
   superimposed.res
 }

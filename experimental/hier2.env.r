@@ -37,10 +37,15 @@ simfun <- function(fit, nsim, ppp) {
   rThomas(fit$kappa, fit$scale, fit$mu, win=as.owin(ppp), nsim=nsim, saveparents=T)
 }
 
+simfun.thomas <- function(fit, nsim, ppp) {
+  pppb <- attr(ppp, 'parents')
+  sim.thom.parents(mu=fit$mu, scale=fit$scale, parents=pppb, win=as.owin(ppp), nsim=nsim)
+}
+
 # Run some envelopes ====
 plan(multicore)
 envs.ind.hier2.thomas <- future_lapply(data$ppp, function(X) {
-  agnenv.composite(list(X), Lest, fitfun, simfun, nsim=199)
+  agnenv.composite(list(X), Lest, fitfun, simfun.thomas, nsim=19)
 }, future.seed=T, future.stdout=NA)
 
 saveRDS(envs.ind.hier2.thomas, 'envelopes/hier2env.rds')
