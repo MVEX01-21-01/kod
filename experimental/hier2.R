@@ -1,5 +1,5 @@
 library(spatstat)
-
+setwd("~/Kandidatarbete/kod")
 source("util.r")
 data_moderate <- readRDS('DATA_ENFS/CALF_MODERATE_df')
 data_normal   <- readRDS('DATA_ENFS/CALF_NORMALS_df')
@@ -34,7 +34,6 @@ thomas.scale.est <- function(children, branches) {
       coords <- x[x[, 3] == j, 1:2, drop=F]
       parent <- branch[branch$Tree == j, 1:2]
       pds <- pairdist(rbind(coords, parent))
-      print(pds[dim(pds)[1], 1:dim(pds)[2] - 1])
       pds[dim(pds)[1], 1:dim(pds)[2] - 1]
     })
   }))
