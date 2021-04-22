@@ -40,9 +40,6 @@ thomas.scale.est <- function(children, branches) {
   sqrt(sum(dists^2)/(length(dists) - 1))
 }
 
-test2 <- thomas.scale.est(data_moderate, data_moderate_b)
-
-
 mu.est <- function(children, branches) {
   bc <- colSums(matrix(unlist(lapply(1:length(children), function(i) {
     child <- children[[i]]
@@ -54,30 +51,46 @@ mu.est <- function(children, branches) {
   bc[2] / bc[1]
 }
 
-mat_scale_moderate <- mat.scale.est(data_moderate, data_moderate_b)
-mat_scale_normal <- mat.scale.est(data_normal, data_normal_b)
-mu_moderate <- mu.est(data_moderate, data_moderate_b)
-mu_normal <- mu.est(data_normal, data_normal_b)
-thom_scale_moderate <- thomas.scale.est(data_moderate, data_moderate_b)
-thom_scale_normal <- thomas.scale.est(data_normal, data_normal_b)
-
 
 sim.mat.parents <- function(mu, scale, parents, nsim, window) {
-  npar <- dim(parents)[1]
+  if (class(parents) == 'ppp') {
+    npar <- parents$n
+    parlist <- data.frame(X=parents$x, Y=parents$y, Tree=1:length(parents$x))
+  } else {
+    npar <- dim(parents)[1]
+    parlist <- parents
+  }
+  if (is.null(npar)) {
+    stop('Invalid parents')
+  }
   res <- list()
+  sigma <- scale / sqrt(2)
   for (j in 1:npar) {
-    parent <- parents[j, , drop=F]
+    parent <- parlist[j, , drop=F]
     n <- rpois(nsim, mu)
     centre = c(parent$X, parent$Y)
-    disc.ppp <- lapply(n, function(x) {runifdisc(n=x, radius=scale, centre=centre)})
-    res[[j]] <- disc.ppp
+    disc <- lapply(n, function(x) {
+      d <- runifdisc(n=x, radius=scale, centre=centre)
+      #Create new ppp to remove invalid points
+      ppp <- ppp(d$x, d$y, window = window)
+      attr(ppp, 'parentid') <- rep(parent$Tree, ppp$n)
+      ppp
+    })
+    res[[j]] <- disc
   }
-  superimposed.res <- list()
+  superimposed.res <- solist()
   for (i in 1:nsim) {
     dd <- solapply(1:npar, function(k) {res[[k]][[i]]})
+    pid <- unlist(lapply(1:npar, function(i) {attr(dd[[i]], 'parentid')}))
     superimposed.res[[i]] <- superimpose(dd, W=window)
+    attr(superimposed.res[[i]], 'parents') <- parents
+    attr(superimposed.res[[i]], 'parentid') <- pid
   }
-  superimposed.res
+  if (nsim == 1) {
+    superimposed.res[[1]]
+  } else {
+    superimposed.res
+  }
 }
 
 sim.thom.parents <- function(mu, scale, parents, nsim, window) {
@@ -113,15 +126,14 @@ sim.thom.parents <- function(mu, scale, parents, nsim, window) {
     attr(superimposed.res[[i]], 'parents') <- parents
     attr(superimposed.res[[i]], 'parentid') <- pid
   }
-  superimposed.res
+  if (nsim == 1) {
+    superimposed.res[[1]]
+  } else {
+    superimposed.res
+  }
 }
 
 gausdisc <- function(n, sigma, centre) {
   res <- matrix(rnorm(2 * n, mean=0, sd=sigma), ncol=2)
   sweep(res, 2, centre, "+")
 }
-
-
-test <- sim.mat.parents(mu_moderate, mat_scale_moderate, data_moderate_b[[1, drop=F]], 10, data_moderate_notree[[1]]$window)
-test2 <- sim.thom.parents(mu_moderate, mat_scale_moderate, data_moderate_b[[1, drop=F]], 10, data_moderate_notree[[1]]$window)
-plot.ppp(test2[[7]])
