@@ -64,7 +64,6 @@ sim.mat.parents <- function(mu, scale, parents, nsim, window) {
     stop('Invalid parents')
   }
   res <- list()
-  sigma <- scale / sqrt(2)
   for (j in 1:npar) {
     parent <- parlist[j, , drop=F]
     n <- rpois(nsim, mu)
