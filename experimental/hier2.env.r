@@ -1,3 +1,4 @@
+setwd("~/Kandidatarbete/kod")
 source('experimental/agnenv.r')
 source('experimental/hier2.R')
 source('util.r')
@@ -82,5 +83,8 @@ envs.ind.hier2.thomas <- future_lapply(data$ppp, function(X) {
 envs.ind.hier2.mat <- future_lapply(data$ppp, function(X) {
   agnenv.composite(list(X), Lest, fitfun.mat, simfun.mat, nsim=19)
 }, future.seed=T, future.stdout=NA)
+
+envs.ind.hier2.mat <- sapply(1:length(envs.ind.hier2.mat), function(i) {envs.ind.hier2.mat[i][[1]]})
+envs.ind.hier2.thomas <- sapply(1:length(envs.ind.hier2.thomas), function(i) {envs.ind.hier2.thomas[i][[1]]})
 
 saveRDS(envs.ind.hier2.thomas, 'envelopes/hier2env.rds')
