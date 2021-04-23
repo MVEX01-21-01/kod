@@ -66,12 +66,12 @@ simfun <- function(fit, nsim, ppp) {
 
 simfun.thomas <- function(fit, nsim, ppp) {
   pppb <- attr(ppp, 'parents')
-  sim.thom.parents(mu=fit$mu, scale=fit$scale, parents=pppb, win=as.owin(ppp), nsim=nsim)
+  sim.thom.parents(mu=fit$mu, scale=fit$scale, parents=pppb, win=as.owin(ppp), nsim=nsim, kappa=fit$kappa)
 }
 
 simfun.mat <- function(fit, nsim, ppp) {
   pppb <- attr(ppp, 'parents')
-  sim.mat.parents(mu=fit$mu, scale=fit$scale, parents=pppb, win=as.owin(ppp), nsim=nsim)
+  sim.mat.parents(mu=fit$mu, scale=fit$scale, parents=pppb, win=as.owin(ppp), nsim=nsim, kappa=fit$kappa)
 }
 
 # Run some envelopes ====
