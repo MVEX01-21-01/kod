@@ -150,9 +150,10 @@ df.true <- data.frame(
   param=rep(c('kappa*area','mu'),length.out=8),
   value=rep(unlist(grouped(function(X) {
     t <- sapply(X, function(X) attr(X, 'parentid'))
+    lus <- function(l) length(unique(sort(l)))
     # weigh intensity according to area (as by formula)
     # weigh mu according to total average (as by Poisson ML)
-    c(sum(sapply(1:length(X), function(i) max(t[[i]])*area(X[[i]])))/sum(sapply(X, area)),
+    c(sum(sapply(1:length(X), function(i) lus(t[[i]])*area(X[[i]])))/sum(sapply(X, area)),
       mean(sapply(t, function(t) mean(rle(sort(t))$lengths))))
   }, data)),length.out=8)
 )
@@ -189,17 +190,17 @@ ggsave('report_out/10_csr.branching.pdf', plot=g, width=5.5, height=3)
 # Compare npoints with fitted params times area
 df.devis <- data.frame(
   id=1:length(data$ppp),
-  truth=sapply(data$ppp, function(ppp) max(attr(ppp, 'parentid'))),
+  truth=sapply(data$ppp, function(ppp) length(unique(sort(attr(ppp, 'parentid'))))),
   parents=sapply(data.branching$ppp, npoints),
   thomas=fit.each.thomas['kappa',]*areas,
   matclust=fit.each.matclust['kappa',]*areas
 )
 g <- ggplot(df.devis, aes(x=reorder(id, -rowMeans(cbind(thomas, matclust)-truth)))) +
-  geom_point(aes(y=truth, color='actual')) +
+  geom_point(aes(y=truth, color='clusters')) +
   geom_point(aes(y=parents, color='branching'), shape=1) +
   geom_point(aes(y=thomas, color='Thomas'), shape=15) +
   geom_point(aes(y=matclust, color='MatClust'), shape=17) +
   labs(x='pattern #', y=expression(italic(kappa*abs(W)))) +
-  scale_colour_manual(values=c(c("#444444"),c("#ff4444"),c("#F7951F"),c("#0154A6"))) +
+  scale_colour_manual(values=c(c("#ff4444"),c("#444444"),c("#F7951F"),c("#0154A6"))) +
   theme(legend.position='bottom', legend.title=element_blank())
 ggsave('report_out/11_deviations.pdf', plot=g, width=5, height=3)
