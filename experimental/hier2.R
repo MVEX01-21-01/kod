@@ -1,5 +1,4 @@
 library(spatstat)
-setwd("~/Kandidatarbete/kod")
 source("util.r")
 data_moderate <- readRDS('DATA_ENFS/CALF_MODERATE_df')
 data_normal   <- readRDS('DATA_ENFS/CALF_NORMALS_df')
@@ -145,9 +144,9 @@ gausdisc <- function(n, sigma, centre) {
   sweep(res, 2, centre, "+")
 }
 
-mat_fit <- fitfun.mat(data[1]$ppp$ppp)
-sim <- simfun.mat(mat_fit, 1, data[1]$ppp$ppp)
-plot(sim)
-thom_fit <- fitfun.thomas(data[1]$ppp$ppp)
-simt <- simfun.thomas(mat_fit, 1, data[1]$ppp$ppp)
-plot(simt)
+#mat_fit <- fitfun.mat(data[1]$ppp$ppp)
+#sim <- simfun.mat(mat_fit, 1, data[1]$ppp$ppp)
+#plot(sim)
+#thom_fit <- fitfun.thomas(data[1]$ppp$ppp)
+#simt <- simfun.thomas(mat_fit, 1, data[1]$ppp$ppp)
+#plot(simt)

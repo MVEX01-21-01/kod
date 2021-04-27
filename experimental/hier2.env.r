@@ -1,4 +1,3 @@
-setwd("~/Kandidatarbete/kod")
 source('experimental/agnenv.r')
 source('experimental/hier2.R')
 source('util.r')
@@ -76,7 +75,7 @@ simfun.mat <- function(fit, nsim, ppp) {
 
 # Run some envelopes ====
 plan(multicore)
-envs.ind.hier2.thom´as <- future_lapply(data$ppp, function(X) {
+envs.ind.hier2.thomas <- future_lapply(data$ppp, function(X) {
   agnenv.composite(list(X), Lest, fitfun.thomas, simfun.thomas, nsim=19)
 }, future.seed=T, future.stdout=NA)
 
