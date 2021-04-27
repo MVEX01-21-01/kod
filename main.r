@@ -134,7 +134,7 @@ df.fit <- rbind(
   longparams(rbind(sapply(fit.matclust.K, function(f) f$modelpar)), 'MatClust', c('MODERATE','NORMAL'), area=mean(areas))
 )
 df.fit[df.fit=='sigma' | df.fit=='R'] <- 'scale'
-df.true <- data.frame(
+df.branch <- data.frame(
   model=rep(c('Thomas','MatClust'),each=4),
   group=rep(c('MODERATE','NORMAL'),each=2,length.out=8),
   param=rep(c('kappa*area','mu'),length.out=8),
@@ -144,11 +144,25 @@ df.true <- data.frame(
     c(intensitybar(X,coeff=sapply(X, area)), intensitybar(dX,coeff=1/ib))
   }, data.branching, dX=split(data$ppp, data$g))),length.out=8)
 )
+df.true <- data.frame(
+  model=rep(c('Thomas','MatClust'),each=4),
+  group=rep(c('MODERATE','NORMAL'),each=2,length.out=8),
+  param=rep(c('kappa*area','mu'),length.out=8),
+  value=rep(unlist(grouped(function(X) {
+    t <- sapply(X, function(X) attr(X, 'parentid'))
+    # weigh intensity according to area (as by formula)
+    # weigh mu according to total average (as by Poisson ML)
+    c(sum(sapply(1:length(X), function(i) max(t[[i]])*area(X[[i]])))/sum(sapply(X, area)),
+      mean(sapply(t, function(t) mean(rle(sort(t))$lengths))))
+  }, data)),length.out=8)
+)
 df.fit$param <- factor(df.fit$param, levels=c('kappa*area', 'mu', 'scale'), labels=c('κ|W|', 'μ', 'τ'))
+df.branch$param <- factor(df.branch$param, levels=c('kappa*area', 'mu', 'scale'), labels=c('κ|W|', 'μ', 'τ'))
 df.true$param <- factor(df.true$param, levels=c('kappa*area', 'mu', 'scale'), labels=c('κ|W|', 'μ', 'τ'))
 g <- g.indparams +
   geom_point(data=df.fit, shape=3, color='red') +
-  geom_point(data=df.true, shape=4, color='blue')
+  geom_point(data=df.branch, shape=4, color='blue') +
+  geom_point(data=df.true, shape=5, color='orange')
 ggsave('report_out/06_bar.box.pdf', plot=g, width=5.2, height=5.2, device=cairo_pdf)
 
 # Group envelopes ==========
@@ -163,7 +177,7 @@ print(sapply(envs.group$MatClust, function(X) msigninv(length(X),minp(X))))
 
 # 3.6 - Branching points analysis ==========
 # A nice plot of all patterns
-g <- grid.arrange(grobs=Map(pppplot, data$ppp, names(data$ppp)))
+g <- grid.arrange(grobs=Map(pppplot, data$ppp, names(data$ppp), tree=T))
 ggsave('report_out/09_patterns.branch.pdf', plot=g, width=5.5, height=5)
 
 # Under the model hypotheses, the parent points (which we take to be the
@@ -174,14 +188,18 @@ ggsave('report_out/10_csr.branching.pdf', plot=g, width=5.5, height=3)
 
 # Compare npoints with fitted params times area
 df.devis <- data.frame(
-  id=1:length(data$ppp), truth=sapply(data.branching$ppp, npoints),
-  thomas=fit.each.thomas['kappa',]*areas, matclust=fit.each.matclust['kappa',]*areas
+  id=1:length(data$ppp),
+  truth=sapply(data$ppp, function(ppp) max(attr(ppp, 'parentid'))),
+  parents=sapply(data.branching$ppp, npoints),
+  thomas=fit.each.thomas['kappa',]*areas,
+  matclust=fit.each.matclust['kappa',]*areas
 )
 g <- ggplot(df.devis, aes(x=reorder(id, -rowMeans(cbind(thomas, matclust)-truth)))) +
   geom_point(aes(y=truth, color='actual')) +
+  geom_point(aes(y=parents, color='branching'), shape=1) +
   geom_point(aes(y=thomas, color='Thomas'), shape=15) +
   geom_point(aes(y=matclust, color='MatClust'), shape=17) +
   labs(x='pattern #', y=expression(italic(kappa*abs(W)))) +
-  scale_colour_manual(values=c(c("#444444"),c("#F7951F"),c("#0154A6"))) +
+  scale_colour_manual(values=c(c("#444444"),c("#ff4444"),c("#F7951F"),c("#0154A6"))) +
   theme(legend.position='bottom', legend.title=element_blank())
 ggsave('report_out/11_deviations.pdf', plot=g, width=5, height=3)
