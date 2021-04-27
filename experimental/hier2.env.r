@@ -20,7 +20,7 @@ fitfun.thomas <- function(ppp) {
   result <- list(
     # Note: you might want to design your own kappa estimator. Here it uses
     # the number of trees over the area (ML-estimate for Poisson I think).
-    kappa=max(trees)/area(ppp)
+    kappa=length(unique(sort(trees)))/area(ppp)
   )
   # Muting the output (otherwise internal assignment would be better)
   capture.output(result$mu <- mu.est(children, branches))
@@ -45,7 +45,7 @@ fitfun.mat <- function(ppp) {
   result <- list(
     # Note: you might want to design your own kappa estimator. Here it uses
     # the number of trees over the area (ML-estimate for Poisson I think).
-    kappa=max(trees)/area(ppp)
+    kappa=length(unique(sort(trees)))/area(ppp)
   )
   # Muting the output (otherwise internal assignment would be better)
   capture.output(result$mu <- mu.est(children, branches))
@@ -76,7 +76,7 @@ simfun.mat <- function(fit, nsim, ppp) {
 
 # Run some envelopes ====
 plan(multicore)
-envs.ind.hier2.thomas <- future_lapply(data$ppp, function(X) {
+envs.ind.hier2.thom´as <- future_lapply(data$ppp, function(X) {
   agnenv.composite(list(X), Lest, fitfun.thomas, simfun.thomas, nsim=19)
 }, future.seed=T, future.stdout=NA)
 
