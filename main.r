@@ -128,12 +128,14 @@ Laux <- auxgrobs(Lgs[[1]])
 g <- combi.grouped(lapply(Lgs, function(g) list(g + labs(x=NULL, y=NULL) + theme(legend.position='none'))), aux=Laux)
 ggsave('report_out/05_bar.L.fit.pdf', plot=g, width=5, height=3)
 
+
 ## Overlay the group results on the boxplots
 df.fit <- rbind(
   longparams(rbind(sapply(fit.thomas.K, function(f) f$modelpar)), 'Thomas', c('MODERATE','NORMAL'), area=mean(areas)),
   longparams(rbind(sapply(fit.matclust.K, function(f) f$modelpar)), 'MatClust', c('MODERATE','NORMAL'), area=mean(areas))
 )
 df.fit[df.fit=='sigma' | df.fit=='R'] <- 'scale'
+
 df.branch <- data.frame(
   model=rep(c('Thomas','MatClust'),each=4),
   group=rep(c('MODERATE','NORMAL'),each=2,length.out=8),
@@ -144,7 +146,8 @@ df.branch <- data.frame(
     c(intensitybar(X,coeff=sapply(X, area)), intensitybar(dX,coeff=1/ib))
   }, data.branching, dX=split(data$ppp, data$g))),length.out=8)
 )
-df.true <- data.frame(
+
+df.hier <- data.frame(
   model=rep(c('Thomas','MatClust'),each=4),
   group=rep(c('MODERATE','NORMAL'),each=2,length.out=8),
   param=rep(c('kappa*area','mu'),length.out=8),
@@ -157,13 +160,21 @@ df.true <- data.frame(
       mean(sapply(t, function(t) mean(rle(sort(t))$lengths))))
   }, data)),length.out=8)
 )
+hierenv <- new.env()
+source('experimental/hier2.R', local=hierenv)
+df.hier <- rbind(df.hier, list('MatClust','MODERATE','scale',hierenv$mat.scale.est(hierenv$data_moderate, hierenv$data_moderate_b)))
+df.hier <- rbind(df.hier, list('MatClust','NORMAL','scale',hierenv$mat.scale.est(hierenv$data_normal, hierenv$data_normal_b)))
+df.hier <- rbind(df.hier, list('Thomas','MODERATE','scale',hierenv$thomas.scale.est(hierenv$data_moderate, hierenv$data_moderate_b)))
+df.hier <- rbind(df.hier, list('Thomas','NORMAL','scale',hierenv$thomas.scale.est(hierenv$data_normal, hierenv$data_normal_b)))
+
 df.fit$param <- factor(df.fit$param, levels=c('kappa*area', 'mu', 'scale'), labels=c('κ|W|', 'μ', 'τ'))
 df.branch$param <- factor(df.branch$param, levels=c('kappa*area', 'mu', 'scale'), labels=c('κ|W|', 'μ', 'τ'))
-df.true$param <- factor(df.true$param, levels=c('kappa*area', 'mu', 'scale'), labels=c('κ|W|', 'μ', 'τ'))
+df.hier$param <- factor(df.hier$param, levels=c('kappa*area', 'mu', 'scale'), labels=c('κ|W|', 'μ', 'τ'))
+
 g <- g.indparams +
   geom_point(data=df.fit, shape=3, color='red') +
   geom_point(data=df.branch, shape=4, color='blue') +
-  geom_point(data=df.true, shape=5, color='orange')
+  geom_point(data=df.hier, shape=5, color='orange')
 ggsave('report_out/06_bar.box.pdf', plot=g, width=5.2, height=5.2, device=cairo_pdf)
 
 # Group envelopes ==========
@@ -190,17 +201,18 @@ ggsave('report_out/10_csr.branching.pdf', plot=g, width=5.5, height=3)
 # Compare npoints with fitted params times area
 df.devis <- data.frame(
   id=1:length(data$ppp),
-  truth=sapply(data$ppp, function(ppp) length(unique(sort(attr(ppp, 'parentid'))))),
+  hier=sapply(data$ppp, function(ppp) length(unique(sort(attr(ppp, 'parentid'))))),
   parents=sapply(data.branching$ppp, npoints),
   thomas=fit.each.thomas['kappa',]*areas,
   matclust=fit.each.matclust['kappa',]*areas
 )
-g <- ggplot(df.devis, aes(x=reorder(id, -rowMeans(cbind(thomas, matclust)-truth)))) +
-  geom_point(aes(y=truth, color='clusters')) +
+g <- ggplot(df.devis, aes(x=reorder(id, -rowMeans(cbind(thomas, matclust)-parents)))) +
+  #geom_point(aes(y=hier, color='clusters')) +
   geom_point(aes(y=parents, color='branching'), shape=1) +
   geom_point(aes(y=thomas, color='Thomas'), shape=15) +
   geom_point(aes(y=matclust, color='MatClust'), shape=17) +
   labs(x='pattern #', y=expression(italic(kappa*abs(W)))) +
-  scale_colour_manual(values=c(c("#ff4444"),c("#444444"),c("#F7951F"),c("#0154A6"))) +
+  #scale_colour_manual(values=c(c("#ff4444"),c("#444444"),c("#F7951F"),c("#0154A6"))) +
+  scale_colour_manual(values=c(c("#444444"),c("#F7951F"),c("#0154A6"))) +
   theme(legend.position='bottom', legend.title=element_blank())
 ggsave('report_out/11_deviations.pdf', plot=g, width=5, height=3)
