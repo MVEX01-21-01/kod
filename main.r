@@ -76,9 +76,17 @@ longparams <- function(pars, model, group, area=NULL) {
 areas <- sapply(data$ppp, area)
 data.params <- rbind(longparams(fit.each.thomas, 'Thomas', data$g, area=areas),
                      longparams(fit.each.matclust, 'MatClust', data$g, area=areas))
-data.params$param <- factor(data.params$param, levels=c('kappa*area', 'mu', 'scale'), labels=c('κ|W|', 'μ', 'τ'))
+paramslabeller <- function(X) {
+  X[X[,2] == 'kappa*area', 2] <- 'κ|W|'
+  X[X[,2] == 'mu', 2] <- 'μ'
+  X[X[,1] == 'MatClust' & X[,2] == 'scale', 2] <- 'R'
+  X[X[,1] == 'Thomas' & X[,2] == 'scale', 2] <- 'σ'
+  X
+}
 g.indparams <- ggplot(data.params, aes(group, value)) +
-  geom_boxplot() + facet_wrap(~ model + param, scales='free')
+  geom_boxplot() + #geom_violin(alpha=0.2,color=NA,fill='gray66') +
+  #geom_jitter(shape=16, position=position_jitter(0.2), alpha=0.4) +
+  facet_wrap(~ model + param, scales='free', labeller=paramslabeller)
 ggsave('report_out/02_ind.box.pdf', plot=g.indparams, width=5.2, height=5.2, device=cairo_pdf)
 
 # Individual envelopes ==========
@@ -162,14 +170,11 @@ df.hier <- data.frame(
 )
 hierenv <- new.env()
 source('experimental/hier2.R', local=hierenv)
-df.hier <- rbind(df.hier, list('MatClust','MODERATE','scale',hierenv$mat.scale.est(hierenv$data_moderate, hierenv$data_moderate_b)))
-df.hier <- rbind(df.hier, list('MatClust','NORMAL','scale',hierenv$mat.scale.est(hierenv$data_normal, hierenv$data_normal_b)))
+# IGNORE MATCLUST SCALE, because they are so large
+#df.hier <- rbind(df.hier, list('MatClust','MODERATE','scale',hierenv$mat.scale.est(hierenv$data_moderate, hierenv$data_moderate_b)))
+#df.hier <- rbind(df.hier, list('MatClust','NORMAL','scale',hierenv$mat.scale.est(hierenv$data_normal, hierenv$data_normal_b)))
 df.hier <- rbind(df.hier, list('Thomas','MODERATE','scale',hierenv$thomas.scale.est(hierenv$data_moderate, hierenv$data_moderate_b)))
 df.hier <- rbind(df.hier, list('Thomas','NORMAL','scale',hierenv$thomas.scale.est(hierenv$data_normal, hierenv$data_normal_b)))
-
-df.fit$param <- factor(df.fit$param, levels=c('kappa*area', 'mu', 'scale'), labels=c('κ|W|', 'μ', 'τ'))
-df.branch$param <- factor(df.branch$param, levels=c('kappa*area', 'mu', 'scale'), labels=c('κ|W|', 'μ', 'τ'))
-df.hier$param <- factor(df.hier$param, levels=c('kappa*area', 'mu', 'scale'), labels=c('κ|W|', 'μ', 'τ'))
 
 g <- g.indparams +
   geom_point(data=df.fit, shape=3, color='red') +
