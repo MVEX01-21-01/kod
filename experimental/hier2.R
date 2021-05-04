@@ -18,9 +18,25 @@ mat.scale.est <- function(children, branches) {
       parent <- branch[branch$Tree == j, ]
       pds <- pairdist(rbind(coords[, 1:2], parent[1:2]))
       dists <- pds[dim(pds)[1], ]
-      max(dists)
+      #max(dists)
     })))
   })))
+}
+
+mat.scale.est2 <- function(children, branches) {
+  unlist(lapply(1:length(children), function(i) {
+    x <- as.matrix(children[[i]])
+    branch <- branches[[i]]
+    trees <- unique(x[, 3])
+    trees <- trees[trees %in% branch$Tree]
+    max_dists <- unlist(lapply(trees, function(j) {
+      coords <- x[x[, 3] == j, , drop=F]
+      parent <- branch[branch$Tree == j, ]
+      pds <- pairdist(rbind(coords[, 1:2], parent[1:2]))
+      dists <- pds[dim(pds)[1], ]
+      #max(dists)
+    }))
+  }))
 }
 
 thomas.scale.est <- function(children, branches) {
@@ -37,6 +53,23 @@ thomas.scale.est <- function(children, branches) {
     })
   }))
   sqrt(sum(dists^2)/(length(dists) - 1))
+}
+
+
+thomas.scale.est2 <- function(children, branches) {
+  dists <- unlist(lapply(1:length(children), function(i) {
+    x <- as.matrix(children[[i]])
+    branch <- branches[[i]]
+    trees <- unique(x[, 3])
+    trees <- trees[trees %in% branch$Tree]
+    dists <- lapply(trees, function(j) {
+      coords <- x[x[, 3] == j, 1:2, drop=F]
+      parent <- branch[branch$Tree == j, 1:2]
+      pds <- pairdist(rbind(coords, parent))
+      pds[dim(pds)[1], 1:dim(pds)[2] - 1]
+    })
+  }))
+  dists
 }
 
 mu.est <- function(children, branches) {
@@ -144,9 +177,16 @@ gausdisc <- function(n, sigma, centre) {
   sweep(res, 2, centre, "+")
 }
 
-#mat_fit <- fitfun.mat(data[1]$ppp$ppp)
-#sim <- simfun.mat(mat_fit, 1, data[1]$ppp$ppp)
-#plot(sim)
-#thom_fit <- fitfun.thomas(data[1]$ppp$ppp)
-#simt <- simfun.thomas(mat_fit, 1, data[1]$ppp$ppp)
-#plot(simt)
+
+tt <- mat.scale.est2(data_moderate, data_moderate_b)
+tt <- tt[tt > 0]
+qq <- quantile(runif(100, max = mat.scale.est(data_moderate, data_moderate_b)), probs = seq(0.01,0.99,0.01))
+par(mfrow=c(1,2))
+ttqq <- quantile(tt , probs = seq(0.01,0.99,0.01))
+plot(qq, ylab='', main='Matérn')
+points(ttqq, pch='*', col='blue')
+qqnorm <- quantile(abs(rnorm(100, sd = thomas.scale.est(data_moderate, data_moderate_b))), probs = seq(0.01,0.99,0.01))
+qqthom <- quantile(thomas.scale.est2(data_moderate, data_moderate_b), probs = seq(0.01,0.99,0.01))
+plot(qqnorm, ylab='', main='Thomas')
+points(qqthom, pch='*', col='blue')
+par(mfrow=c(1,1))
