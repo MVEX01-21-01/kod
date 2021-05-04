@@ -155,17 +155,17 @@ df.branch <- data.frame(
   }, data.branching, dX=split(data$ppp, data$g))),length.out=8)
 )
 
-He <- new.env()
-source('experimental/hier2.R', local=He)
-df.hier <- data.frame(model='MatClust',group='MODERATE',param='mu',value=hierenv$mu.est(hierenv$data_moderate, hierenv$data_moderate_b))
-df.hier <- rbind(df.hier, list('MatClust','NORMAL','mu',hierenv$mu.est(hierenv$data_normal, hierenv$data_normal_b)))
-df.hier <- rbind(df.hier, list('Thomas','MODERATE','mu',hierenv$mu.est(hierenv$data_moderate, hierenv$data_moderate_b)))
-df.hier <- rbind(df.hier, list('Thomas','NORMAL','mu',hierenv$mu.est(hierenv$data_normal, hierenv$data_normal_b)))
+H2 <- new.env()
+source('experimental/hier2.R', local=H2)
+df.hier <- data.frame(model='MatClust',group='MODERATE',param='mu',value=H2$mu.est(H2$data_moderate, H2$data_moderate_b))
+df.hier <- rbind(df.hier, list('MatClust','NORMAL','mu',H2$mu.est(H2$data_normal, H2$data_normal_b)))
+df.hier <- rbind(df.hier, list('Thomas','MODERATE','mu',H2$mu.est(H2$data_moderate, H2$data_moderate_b)))
+df.hier <- rbind(df.hier, list('Thomas','NORMAL','mu',H2$mu.est(H2$data_normal, H2$data_normal_b)))
 # IGNORE MATCLUST SCALE, because they are so large
-#df.hier <- rbind(df.hier, list('MatClust','MODERATE','scale',hierenv$mat.scale.est(hierenv$data_moderate, hierenv$data_moderate_b)))
-#df.hier <- rbind(df.hier, list('MatClust','NORMAL','scale',hierenv$mat.scale.est(hierenv$data_normal, hierenv$data_normal_b)))
-df.hier <- rbind(df.hier, list('Thomas','MODERATE','scale',hierenv$thomas.scale.est(hierenv$data_moderate, hierenv$data_moderate_b)))
-df.hier <- rbind(df.hier, list('Thomas','NORMAL','scale',hierenv$thomas.scale.est(hierenv$data_normal, hierenv$data_normal_b)))
+#df.hier <- rbind(df.hier, list('MatClust','MODERATE','scale',H2$mat.scale.est(H2$data_moderate, H2$data_moderate_b)))
+#df.hier <- rbind(df.hier, list('MatClust','NORMAL','scale',H2$mat.scale.est(H2$data_normal, H2$data_normal_b)))
+df.hier <- rbind(df.hier, list('Thomas','MODERATE','scale',H2$thomas.scale.est(H2$data_moderate, H2$data_moderate_b)))
+df.hier <- rbind(df.hier, list('Thomas','NORMAL','scale',H2$thomas.scale.est(H2$data_normal, H2$data_normal_b)))
 
 g <- g.indparams +
   geom_point(data=df.fit, shape=3, color='red') +
@@ -212,3 +212,4 @@ g <- ggplot(df.devis, aes(x=reorder(id, -rowMeans(cbind(thomas, matclust)-parent
   scale_colour_manual(values=c(c("#444444"),c("#F7951F"),c("#0154A6"))) +
   theme(legend.position='bottom', legend.title=element_blank())
 ggsave('report_out/11_deviations.pdf', plot=g, width=5, height=3)
+

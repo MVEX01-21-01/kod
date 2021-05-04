@@ -189,10 +189,10 @@ par(mfrow=c(2,2))
 qqmat_mod <- quantile(mat_mod, probs = seq(0.01,0.99,0.01))
 qqmat_norm <- quantile(mat_norm, probs = seq(0.01,0.99,0.01))
 
-plot(qq_mod, ylab='', main='Matérn MODERATE')
+plot(qq_mod, ylab='', main='MatÃ©rn MODERATE')
 points(qqmat_mod, pch='*', col='blue')
 
-plot(qq_norm, ylab='', main='Matérn NORMAL')
+plot(qq_norm, ylab='', main='MatÃ©rn NORMAL')
 points(qqmat_norm, pch='*', col='blue')
 
 qq2_norm <- quantile(abs(rnorm(100, sd = thomas.scale.est(data_normal, data_normal_b))), probs = seq(0.01,0.99,0.01))
