@@ -155,21 +155,12 @@ df.branch <- data.frame(
   }, data.branching, dX=split(data$ppp, data$g))),length.out=8)
 )
 
-df.hier <- data.frame(
-  model=rep(c('Thomas','MatClust'),each=4),
-  group=rep(c('MODERATE','NORMAL'),each=2,length.out=8),
-  param=rep(c('kappa*area','mu'),length.out=8),
-  value=rep(unlist(grouped(function(X) {
-    t <- sapply(X, function(X) attr(X, 'parentid'))
-    lus <- function(l) length(unique(sort(l)))
-    # weigh intensity according to area (as by formula)
-    # weigh mu according to total average (as by Poisson ML)
-    c(sum(sapply(1:length(X), function(i) lus(t[[i]])*area(X[[i]])))/sum(sapply(X, area)),
-      mean(sapply(t, function(t) mean(rle(sort(t))$lengths))))
-  }, data)),length.out=8)
-)
-hierenv <- new.env()
-source('experimental/hier2.R', local=hierenv)
+He <- new.env()
+source('experimental/hier2.R', local=He)
+df.hier <- data.frame(model='MatClust',group='MODERATE',param='mu',value=hierenv$mu.est(hierenv$data_moderate, hierenv$data_moderate_b))
+df.hier <- rbind(df.hier, list('MatClust','NORMAL','mu',hierenv$mu.est(hierenv$data_normal, hierenv$data_normal_b)))
+df.hier <- rbind(df.hier, list('Thomas','MODERATE','mu',hierenv$mu.est(hierenv$data_moderate, hierenv$data_moderate_b)))
+df.hier <- rbind(df.hier, list('Thomas','NORMAL','mu',hierenv$mu.est(hierenv$data_normal, hierenv$data_normal_b)))
 # IGNORE MATCLUST SCALE, because they are so large
 #df.hier <- rbind(df.hier, list('MatClust','MODERATE','scale',hierenv$mat.scale.est(hierenv$data_moderate, hierenv$data_moderate_b)))
 #df.hier <- rbind(df.hier, list('MatClust','NORMAL','scale',hierenv$mat.scale.est(hierenv$data_normal, hierenv$data_normal_b)))
