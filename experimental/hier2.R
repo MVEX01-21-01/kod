@@ -178,15 +178,32 @@ gausdisc <- function(n, sigma, centre) {
 }
 
 
-tt <- mat.scale.est2(data_moderate, data_moderate_b)
-tt <- tt[tt > 0]
-qq <- quantile(runif(100, max = mat.scale.est(data_moderate, data_moderate_b)), probs = seq(0.01,0.99,0.01))
-par(mfrow=c(1,2))
-ttqq <- quantile(tt , probs = seq(0.01,0.99,0.01))
-plot(qq, ylab='', main='Matérn')
-points(ttqq, pch='*', col='blue')
-qqnorm <- quantile(abs(rnorm(100, sd = thomas.scale.est(data_moderate, data_moderate_b))), probs = seq(0.01,0.99,0.01))
-qqthom <- quantile(thomas.scale.est2(data_moderate, data_moderate_b), probs = seq(0.01,0.99,0.01))
-plot(qqnorm, ylab='', main='Thomas')
-points(qqthom, pch='*', col='blue')
+mat_mod <- mat.scale.est2(data_moderate, data_moderate_b)
+mat_mod <- mat_mod[mat_mod > 0]
+mat_norm <- mat.scale.est2(data_normal, data_normal_b)
+mat_norm <- mat_norm[mat_norm > 0]
+qq_mod <- quantile(runif(100, max = mat.scale.est(data_moderate, data_moderate_b)), probs = seq(0.01,0.99,0.01))
+qq_norm <- quantile(runif(100, max = mat.scale.est(data_normal, data_normal_b)), probs = seq(0.01,0.99,0.01))
+
+par(mfrow=c(2,2))
+qqmat_mod <- quantile(mat_mod, probs = seq(0.01,0.99,0.01))
+qqmat_norm <- quantile(mat_norm, probs = seq(0.01,0.99,0.01))
+
+plot(qq_mod, ylab='', main='Matérn MODERATE')
+points(qqmat_mod, pch='*', col='blue')
+
+plot(qq_norm, ylab='', main='Matérn NORMAL')
+points(qqmat_norm, pch='*', col='blue')
+
+qq2_norm <- quantile(abs(rnorm(100, sd = thomas.scale.est(data_normal, data_normal_b))), probs = seq(0.01,0.99,0.01))
+qq2_mod <- quantile(abs(rnorm(100, sd = thomas.scale.est(data_moderate, data_moderate_b))), probs = seq(0.01,0.99,0.01))
+
+qqthom_mod <- quantile(thomas.scale.est2(data_moderate, data_moderate_b), probs = seq(0.01,0.99,0.01))
+qqthom_norm <- quantile(thomas.scale.est2(data_normal, data_normal_b), probs = seq(0.01,0.99,0.01))
+
+plot(qq2_mod, ylab='', main='Thomas MODERATE')
+points(qqthom_mod, pch='*', col='blue')
+
+plot(qq2_norm, ylab='', main='Thomas NORMAL')
+points(qqthom_norm, pch='*', col='blue')
 par(mfrow=c(1,1))
