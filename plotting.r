@@ -104,9 +104,9 @@ pppplot <- function(X, tag=NULL, tree=F) {
 
   xlim <- X$window$xrange
   ylim <- X$window$yrange
-  ggplot() + geom_point(aes(x=X$x, y=X$y, color=Xm), shape=1) +
-    geom_point(aes(x=P$x, y=P$y, color=Pm), size=3, shape=4) +
-    labs(title=NULL, tag=tag, x=NULL, y=NULL) + coord_fixed(xlim=xlim, ylim=ylim, expand=F, clip='off') +
+  ggplot() + geom_point(aes(x=X$x, y=X$y, color=Xm), shape=1, stroke=0.35) +
+    geom_point(aes(x=P$x, y=P$y, color=Pm), size=3, shape=4, stroke=0.35) +
+    labs(title=tag, tag=NULL, x=NULL, y=NULL) + coord_fixed(xlim=xlim, ylim=ylim, expand=F, clip='off') +
     theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank(),
-          panel.border = element_rect(color='gray', fill=NA, size=0.5), plot.tag=theme_get()$axis.text, legend.position='none')
+          panel.border = element_rect(color='gray', fill=NA, size=0.5), plot.title=theme_get()$axis.text, legend.position='none')
 }

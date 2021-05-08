@@ -109,9 +109,9 @@ write.csvX(data.frame(
   matclust=t(mapply(function(x) x$modelpar, fit.matclust.K))),
   'report_out/bar.par.csv')
 
-brpars <- Map(startpars.branching, split(data$ppp, data$g), split(data.branching$ppp, data.branching$g))
-fit.thomas.K.br <- repcluster.estK(data, 'Thomas', startpars=brpars)
-fit.matclust.K.br <- repcluster.estK(data, 'MatClust', startpars=brpars)
+#brpars <- Map(startpars.branching, split(data$ppp, data$g), split(data.branching$ppp, data.branching$g))
+#fit.thomas.K.br <- repcluster.estK(data, 'Thomas', startpars=brpars)
+#fit.matclust.K.br <- repcluster.estK(data, 'MatClust', startpars=brpars)
 
 Llimits <- list(
   xmin = max(sapply(K, function(fv) min(fv$r))),
@@ -144,28 +144,40 @@ df.fit <- rbind(
 )
 df.fit[df.fit=='sigma' | df.fit=='R'] <- 'scale'
 
+par.branch <- unlist(grouped(function(X, dX) {
+  ib <- intensitybar(X)
+  # NOTE: reweighted to kappa*area
+  c(intensitybar(X,coeff=sapply(X, area)), intensitybar(dX,coeff=1/ib))
+}, data.branching, dX=split(data$ppp, data$g)))
 df.branch <- data.frame(
   model=rep(c('Thomas','MatClust'),each=4),
   group=rep(c('MODERATE','NORMAL'),each=2,length.out=8),
   param=rep(c('kappa*area','mu'),length.out=8),
-  value=rep(unlist(grouped(function(X, dX) {
-    ib <- intensitybar(X)
-    # NOTE: reweighted to kappa*area
-    c(intensitybar(X,coeff=sapply(X, area)), intensitybar(dX,coeff=1/ib))
-  }, data.branching, dX=split(data$ppp, data$g))),length.out=8)
+  value=rep(par.branch,length.out=8)
 )
+write.csvX(data.frame(
+  group=c('MODERATE','NORMAL'),
+  kappa=unlist(grouped(intensitybar, data.branching)),
+  mu=c(par.branch[2], par.branch[4])),
+  'report_out/branching.par.csv')
 
 H2 <- new.env()
 source('experimental/hier2.R', local=H2)
-df.hier <- data.frame(model='MatClust',group='MODERATE',param='mu',value=H2$mu.est(H2$data_moderate, H2$data_moderate_b))
-df.hier <- rbind(df.hier, list('MatClust','NORMAL','mu',H2$mu.est(H2$data_normal, H2$data_normal_b)))
-df.hier <- rbind(df.hier, list('Thomas','MODERATE','mu',H2$mu.est(H2$data_moderate, H2$data_moderate_b)))
-df.hier <- rbind(df.hier, list('Thomas','NORMAL','mu',H2$mu.est(H2$data_normal, H2$data_normal_b)))
+par.hier <- data.frame(
+  group=c('MODERATE','NORMAL'),
+  mu=c(H2$mu.est(H2$data_moderate, H2$data_moderate_b), H2$mu.est(H2$data_normal, H2$data_normal_b)),
+  sigma=c(H2$thomas.scale.est(H2$data_moderate, H2$data_moderate_b), H2$thomas.scale.est(H2$data_normal, H2$data_normal_b)),
+  R=c(H2$mat.scale.est(H2$data_moderate, H2$data_moderate_b), H2$mat.scale.est(H2$data_normal, H2$data_normal_b)))
+df.hier <- data.frame(model='MatClust',group='MODERATE',param='mu',value=par.hier[1,2])
+df.hier <- rbind(df.hier, list('MatClust','NORMAL','mu',par.hier[2,2]))
+df.hier <- rbind(df.hier, list('Thomas','MODERATE','mu',par.hier[1,2]))
+df.hier <- rbind(df.hier, list('Thomas','NORMAL','mu',par.hier[2,2]))
 # IGNORE MATCLUST SCALE, because they are so large
-#df.hier <- rbind(df.hier, list('MatClust','MODERATE','scale',H2$mat.scale.est(H2$data_moderate, H2$data_moderate_b)))
-#df.hier <- rbind(df.hier, list('MatClust','NORMAL','scale',H2$mat.scale.est(H2$data_normal, H2$data_normal_b)))
-df.hier <- rbind(df.hier, list('Thomas','MODERATE','scale',H2$thomas.scale.est(H2$data_moderate, H2$data_moderate_b)))
-df.hier <- rbind(df.hier, list('Thomas','NORMAL','scale',H2$thomas.scale.est(H2$data_normal, H2$data_normal_b)))
+#df.hier <- rbind(df.hier, list('MatClust','MODERATE','scale',par.hier[1,4]))
+#df.hier <- rbind(df.hier, list('MatClust','NORMAL','scale',par.hier[2,4]))
+df.hier <- rbind(df.hier, list('Thomas','MODERATE','scale',par.hier[1,3]))
+df.hier <- rbind(df.hier, list('Thomas','NORMAL','scale',par.hier[2,3]))
+write.csvX(par.hier, 'report_out/hier.par.csv')
 
 g <- g.indparams +
   geom_point(data=df.fit, shape=3, color='red') +
@@ -185,7 +197,7 @@ print(sapply(envs.group$MatClust, function(X) msigninv(length(X),minp(X))))
 
 # 3.6 - Branching points analysis ==========
 # A nice plot of all patterns
-g <- grid.arrange(grobs=Map(pppplot, data$ppp, names(data$ppp), tree=T))
+g <- grid.arrange(grobs=Map(pppplot, data$ppp, tag=paste0(names(data$ppp),' (',data$g,')'), tree=T))
 ggsave('report_out/09_patterns.branch.pdf', plot=g, width=5.5, height=5)
 
 # Under the model hypotheses, the parent points (which we take to be the
@@ -212,4 +224,3 @@ g <- ggplot(df.devis, aes(x=reorder(id, -rowMeans(cbind(thomas, matclust)-parent
   scale_colour_manual(values=c(c("#444444"),c("#F7951F"),c("#0154A6"))) +
   theme(legend.position='bottom', legend.title=element_blank())
 ggsave('report_out/11_deviations.pdf', plot=g, width=5, height=3)
-
