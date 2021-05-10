@@ -52,8 +52,31 @@ thomas.scale.est <- function(children, branches) {
       pds[dim(pds)[1], 1:dim(pds)[2] - 1]
     })
   }))
-  sqrt(sum(dists^2)/(length(dists) - 1))
+  sqrt(sum(dists^2)/(2*length(dists)))
 }
+
+thomas.scale.est.alt <- function(children, branches) {
+  dists <- unlist(lapply(1:length(children), function(i) {
+    x <- as.matrix(children[[i]])
+    branch <- branches[[i]]
+    trees <- unique(x[, 3])
+    trees <- trees[trees %in% branch$Tree]
+    dists <- lapply(trees, function(j) {
+      coords <- x[x[, 3] == j, 1:2, drop=F]
+      parent <- branch[branch$Tree == j, 1:2]
+      pds <- pairdist(rbind(coords, parent))
+      pds[dim(pds)[1], 1:dim(pds)[2] - 1]
+    })
+  }))
+  N <- length(dists)
+  sigma_hat <- sqrt(sum(dists^2)/(2*length(dists)))
+  nom <- 4^N * factorial(N) * factorial(N - 1) * sqrt(N)
+  denom <- factorial(2 * N) * sqrt(pi)
+  sigma <- sigma_hat * nom / denom
+  sigma_hat
+}
+
+
 
 
 thomas.scale.est2 <- function(children, branches) {
@@ -144,13 +167,12 @@ sim.thom.parents <- function(mu, scale, parents, nsim, window, kappa, scale.dila
   }
   npar <- dim(parlist)[1]
   res <- list()
-  sigma <- scale / sqrt(2)
   for (j in 1:npar) {
     parent <- parlist[j, , drop=F]
     n <- rpois(nsim, mu)
     centre = c(parent$X, parent$Y)
     disc <- lapply(n, function(x) {
-      d <- gausdisc(n=x, sigma=sigma, centre=centre)
+      d <- gausdisc(n=x, sigma=scale, centre=centre)
       ppp <- ppp(d[, 1], d[, 2], window=window)
       attr(ppp, 'parentid') <- rep(parent$Tree, ppp$n)
       ppp
@@ -177,6 +199,8 @@ gausdisc <- function(n, sigma, centre) {
   sweep(res, 2, centre, "+")
 }
 
+thomas.scale.est(data_moderate, data_moderate_b)
+thomas.scale.est.alt(data_moderate, data_moderate_b)
 
 mat_mod <- mat.scale.est2(data_moderate, data_moderate_b)
 mat_mod <- mat_mod[mat_mod > 0]
@@ -189,10 +213,10 @@ par(mfrow=c(2,2))
 qqmat_mod <- quantile(mat_mod, probs = seq(0.01,0.99,0.01))
 qqmat_norm <- quantile(mat_norm, probs = seq(0.01,0.99,0.01))
 
-plot(qq_mod, ylab='', main='MatÃ©rn MODERATE')
+plot(qq_mod, ylab='', main='Matèrn MODERATE')
 points(qqmat_mod, pch='*', col='blue')
 
-plot(qq_norm, ylab='', main='MatÃ©rn NORMAL')
+plot(qq_norm, ylab='', main='Matèrn NORMAL')
 points(qqmat_norm, pch='*', col='blue')
 
 qq2_norm <- quantile(abs(rnorm(100, sd = thomas.scale.est(data_normal, data_normal_b))), probs = seq(0.01,0.99,0.01))
@@ -201,9 +225,9 @@ qq2_mod <- quantile(abs(rnorm(100, sd = thomas.scale.est(data_moderate, data_mod
 qqthom_mod <- quantile(thomas.scale.est2(data_moderate, data_moderate_b), probs = seq(0.01,0.99,0.01))
 qqthom_norm <- quantile(thomas.scale.est2(data_normal, data_normal_b), probs = seq(0.01,0.99,0.01))
 
-plot(qq2_mod, ylab='', main='Thomas MODERATE')
+plot(qq2_mod, qqthom_mod, ylab='', main='Thomas MODERATE')
 points(qqthom_mod, pch='*', col='blue')
 
-plot(qq2_norm, ylab='', main='Thomas NORMAL')
+plot(qq2_norm, qqthom_norm, ylab='', main='Thomas NORMAL')
 points(qqthom_norm, pch='*', col='blue')
 par(mfrow=c(1,1))
