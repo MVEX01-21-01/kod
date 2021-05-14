@@ -88,10 +88,10 @@ plot.envs.grouped <- function(groups, noaxes=T, ...) {
 }
 
 # Point patterns ====
-pppplot <- function(X, tag=NULL, tree=F) {
+pppplot <- function(X, tag=NULL, parents=T, tree=F) {
   Xm <- NULL
   Pm <- NULL
-  if (!is.null(attr(X, 'parents'))) {
+  if (!is.null(attr(X, 'parents')) && parents) {
     P <- attr(X, 'parents')
     if (tree) {
       Xm <- factor(attr(X, 'parentid'))
