@@ -5,11 +5,15 @@ MVEX01-21-01
 
 -----------------------
 
+Av rättighetsskäl kan vi inte offentliggöra datan genom detta arkiv.
+Intresserade är välkomna att kontakta författarna.
+Principiellt kan hela rapporten annars replikeras genom kodbasen.
+
 Börja förslagsvis i main.r, där koden som genererar figurer till rapporten
 återfinns. De genererade figurerna samlas i report_out/.
 
 För att köra de långsamma anpassningstesterna, använd batch.sh.
-Resultaten är samlade i envelopes/.
-
-Rådatan finns under DATA_ENFS/.
+Resultaten samlas i envelopes/. Tyvärr är de råa resultaten också censurerade,
+eftersom de implict innehåller datan.
+Rådatan krävs alltså under DATA_ENFS/.
 
