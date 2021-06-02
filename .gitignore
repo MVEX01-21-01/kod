@@ -2,3 +2,7 @@
 .RData
 report_out
 *.zip
+
+#censor
+DATA_ENFS
+envelopes
